@@ -27,7 +27,7 @@ public class SecurityConfiguration {
                         )
                         .permitAll()
                         .requestMatchers(
-                                "/users/log-in"             // Страница логина
+                                "/users/log-in"
                         )
                         .permitAll()
                         .anyRequest()
@@ -54,5 +54,4 @@ public class SecurityConfiguration {
 
         return provider;
     }
-
 }

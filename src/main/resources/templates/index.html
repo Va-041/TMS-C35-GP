@@ -21,7 +21,6 @@
     <link rel="icon" type="image/x-icon" th:href="@{/images/favicon.ico}">
 
     <style>
-        /* Inline animations for immediate effect */
         @keyframes gradientShift {
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -44,6 +43,34 @@
     </style>
 </head>
 <body>
+
+<!-- Notification Toast -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div th:if="${param.signup_success}"
+         class="toast show" role="alert">
+        <div class="toast-header bg-success text-white">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong class="me-auto">Успех!</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Регистрация прошла успешно! Теперь вы можете войти в систему.
+        </div>
+    </div>
+
+    <div th:if="${param.logout}"
+         class="toast show" role="alert">
+        <div class="toast-header bg-info text-white">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto">Выход</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Вы успешно вышли из системы.
+        </div>
+    </div>
+</div>
+
 <!-- Navigation Bar -->
 <nav class="navbar navbar-expand-lg navbar-glass fixed-top">
     <div class="container">
@@ -615,5 +642,6 @@
         });
     });
 </script>
+
 </body>
 </html>
