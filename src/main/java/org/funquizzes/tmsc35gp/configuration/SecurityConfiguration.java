@@ -16,17 +16,28 @@ public class SecurityConfiguration {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
-                .authorizeHttpRequests(castomizer -> castomizer
-                        .requestMatchers("/", "/users/sing-up")
+                .authorizeHttpRequests(customizer -> customizer
+                        .requestMatchers(
+                                "/",                         // Главная страница
+                                "/users/sing-up",            // Регистрация
+                                "/css/**",                   // CSS файлы
+                                "/js/**",                    // JS файлы
+                                "/images/**",                // Изображения
+                                "/favicon.ico"               // Favicon
+                        )
+                        .permitAll()
+                        .requestMatchers(
+                                "/users/log-in"             // Страница логина
+                        )
                         .permitAll()
                         .anyRequest()
                         .authenticated())
-                .formLogin(castomizer -> castomizer
+                .formLogin(customizer -> customizer
                         .loginPage("/users/log-in")
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/users/log-in?error=true")
                         .permitAll())
-                .logout(castomizer -> castomizer
+                .logout(customizer -> customizer
                         .logoutUrl("/users/logout")
                         .logoutSuccessUrl("/"))
                 .build();

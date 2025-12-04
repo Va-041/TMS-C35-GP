@@ -1,15 +1,619 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fun Quizzes: прокачай свой мозг весело!</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" th:href="@{/images/favicon.ico}">
+
+    <style>
+        /* Inline animations for immediate effect */
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(67, 97, 238, 0.5); }
+            50% { box-shadow: 0 0 40px rgba(67, 97, 238, 0.8); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+    </style>
 </head>
 <body>
-    <a href="/users/sing-up">Sing Up</a>
-    <a href="/users/log-in">Log In</a>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-glass fixed-top">
+    <div class="container">
+        <!-- Logo -->
+        <a class="navbar-brand d-flex align-items-center" th:href="@{/}">
+            <div class="logo-icon me-2">
+                <i class="bi bi-controller"></i>
+            </div>
+            <span class="brand-text">Fun<span class="brand-highlight">Quizzes</span></span>
+        </a>
 
-    <form th:action="@{/users/logout}" method="post">
-        <button>LOG OUT</button>
-    </form>
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <!-- Navbar Items -->
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" th:href="@{/}">
+                        <i class="bi bi-house-door me-1"></i>Главная
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#quizzes">
+                        <i class="bi bi-trophy me-1"></i>Викторины
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#categories">
+                        <i class="bi bi-tags me-1"></i>Категории
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#how-it-works">
+                        <i class="bi bi-question-circle me-1"></i>Как играть?
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Auth Buttons -->
+            <div class="d-flex" th:if="${#authorization.expression('isAuthenticated()')}">
+                <div class="dropdown">
+                    <button class="btn btn-gradient dropdown-toggle d-flex align-items-center"
+                            type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-person-circle me-2"></i>
+                        <span th:text="${#authentication.name}">Игрок</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Профиль</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-plus-circle me-2"></i>Создать викторину</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form th:action="@{/users/logout}" method="post" class="mb-0">
+                                <button class="dropdown-item text-danger" type="submit">
+                                    <i class="bi bi-box-arrow-right me-2"></i>Выйти
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="d-flex" th:unless="${#authorization.expression('isAuthenticated()')}">
+                <a th:href="@{/users/log-in}" class="btn btn-outline-light me-3">
+                    <i class="bi bi-box-arrow-in-right me-1"></i>Войти
+                </a>
+                <a th:href="@{/users/sing-up}" class="btn btn-primary btn-pulse">
+                    <i class="bi bi-person-plus me-1"></i>Начать играть
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="hero-title animate__animated animate__fadeInUp">
+                    <span class="text-gradient">Бросай вызов</span><br>
+                    <span class="text-outline">своему интеллекту!</span>
+                </h1>
+                <p class="hero-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                    Создавай собственные викторины или соревнуйся с друзьями.
+                    Обучение ещё никогда не было таким <span class="highlight">увлекательным</span>!
+                </p>
+                <div class="hero-stats animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="stat">
+                        <span class="number">1500+</span>
+                        <span class="label">викторин</span>
+                    </div>
+                    <div class="stat">
+                        <span class="number">5000+</span>
+                        <span class="label">игроков</span>
+                    </div>
+                    <div class="stat">
+                        <span class="number">45k+</span>
+                        <span class="label">игр сыграно</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-visual">
+                    <div class="quiz-bubble quiz-bubble-1 animate__animated animate__bounceIn">
+                        <i class="bi bi-question-circle"></i>
+                    </div>
+                    <div class="quiz-bubble quiz-bubble-2 animate__animated animate__bounceIn animate__delay-1s">
+                        <i class="bi bi-lightning"></i>
+                    </div>
+                    <div class="quiz-bubble quiz-bubble-3 animate__animated animate__bounceIn animate__delay-2s">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <div class="main-quiz-card animate__animated animate__fadeIn">
+                        <div class="quiz-header">
+                            <span class="badge">ИДЕТ СЕЙЧАС</span>
+                            <span class="players">🎮 42 игрока</span>
+                        </div>
+                        <div class="quiz-body">
+                            <h3>Викторина по Java</h3>
+                            <p>Кто быстрее ответит на все вопросы?</p>
+                        </div>
+                        <div class="quiz-footer">
+                            <button class="btn btn-sm btn-primary">Присоединиться</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Animated background -->
+    <div class="hero-bg">
+        <div class="circle circle-1"></div>
+        <div class="circle circle-2"></div>
+        <div class="circle circle-3"></div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card animate__animated animate__fadeInUp">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h2 class="cta-title">Готов стать чемпионом?</h2>
+                    <p class="cta-text">
+                        Присоединяйся к сообществу любителей интеллектуальных баталий!
+                        Создавай, играй, побеждай!
+                    </p>
+                </div>
+                <div class="col-lg-4 text-lg-end">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a th:href="@{/users/sing-up}" class="btn btn-primary btn-lg btn-glow">
+                            <i class="bi bi-person-plus me-2"></i>Начать бесплатно
+                        </a>
+                        <a th:href="@{/users/log-in}" class="btn btn-outline-light btn-lg">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Quizzes -->
+<section id="quizzes" class="quizzes-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title animate__animated animate__fadeInUp">
+                <i class="bi bi-fire me-2"></i>Горячие викторины
+            </h2>
+            <p class="section-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                Самые популярные баталии прямо сейчас
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Quiz 1 -->
+            <div class="col-md-4">
+                <div class="quiz-card animate__animated animate__fadeInUp">
+                    <div class="quiz-header">
+                        <span class="quiz-category">💻 Программирование</span>
+                        <span class="quiz-difficulty easy">Легко</span>
+                    </div>
+                    <div class="quiz-body">
+                        <h3 class="quiz-title">Java Core для новичков</h3>
+                        <p class="quiz-description">
+                            20 вопросов по основам Java. Идеально для начала карьеры разработчика.
+                        </p>
+                        <div class="quiz-meta">
+                            <div class="quiz-author">
+                                <img src="https://i.pravatar.cc/40?img=1" alt="Author" class="author-avatar">
+                                <div>
+                                    <div class="author-name">Alex Developer</div>
+                                    <small>Создано сегодня</small>
+                                </div>
+                            </div>
+                            <div class="quiz-stats">
+                                <span><i class="bi bi-play-circle"></i> 1.2K</span>
+                                <span><i class="bi bi-star-fill"></i> 4.8</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-footer">
+                        <a href="#" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-1"></i>Играть
+                        </a>
+                        <span class="quiz-time">⏱️ 15 мин</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz 2 -->
+            <div class="col-md-4">
+                <div class="quiz-card animate__animated animate__fadeInUp animate__delay-1s">
+                    <div class="quiz-header">
+                        <span class="quiz-category">📚 Образование</span>
+                        <span class="quiz-difficulty medium">Средне</span>
+                    </div>
+                    <div class="quiz-body">
+                        <h3 class="quiz-title">Великие изобретения</h3>
+                        <p class="quiz-description">
+                            От колеса до интернета. Проверь свои знания истории технологий.
+                        </p>
+                        <div class="quiz-meta">
+                            <div class="quiz-author">
+                                <img src="https://i.pravatar.cc/40?img=2" alt="Author" class="author-avatar">
+                                <div>
+                                    <div class="author-name">History Pro</div>
+                                    <small>Создано 2 дня назад</small>
+                                </div>
+                            </div>
+                            <div class="quiz-stats">
+                                <span><i class="bi bi-play-circle"></i> 2.5K</span>
+                                <span><i class="bi bi-star-fill"></i> 4.9</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-footer">
+                        <a href="#" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-1"></i>Играть
+                        </a>
+                        <span class="quiz-time">⏱️ 20 мин</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz 3 -->
+            <div class="col-md-4">
+                <div class="quiz-card animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="quiz-header">
+                        <span class="quiz-category">⚽ Спорт</span>
+                        <span class="quiz-difficulty hard">Сложно</span>
+                    </div>
+                    <div class="quiz-body">
+                        <h3 class="quiz-title">Легенды футбола</h3>
+                        <p class="quiz-description">
+                            Все чемпионаты мира с 1930 года. Для настоящих знатоков футбола.
+                        </p>
+                        <div class="quiz-meta">
+                            <div class="quiz-author">
+                                <img src="https://i.pravatar.cc/40?img=3" alt="Author" class="author-avatar">
+                                <div>
+                                    <div class="author-name">Sports Fan</div>
+                                    <small>Создано неделю назад</small>
+                                </div>
+                            </div>
+                            <div class="quiz-stats">
+                                <span><i class="bi bi-play-circle"></i> 3.1K</span>
+                                <span><i class="bi bi-star-fill"></i> 4.7</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-footer">
+                        <a href="#" class="btn btn-primary">
+                            <i class="bi bi-play-fill me-1"></i>Играть
+                        </a>
+                        <span class="quiz-time">⏱️ 25 мин</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mt-5">
+            <a href="#" class="btn btn-outline-primary btn-lg">
+                Смотреть все викторины <i class="bi bi-arrow-right ms-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Categories -->
+<section id="categories" class="categories-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title animate__animated animate__fadeInUp">
+                <i class="bi bi-grid-3x3-gap me-2"></i>Категории викторин
+            </h2>
+            <p class="section-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                Выбери тему по душе
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Category 1 -->
+            <div class="col-md-3 col-sm-6">
+                <a href="#" class="category-card animate__animated animate__fadeInUp">
+                    <div class="category-icon category-tech">
+                        <i class="bi bi-code-slash"></i>
+                    </div>
+                    <h4>Технологии</h4>
+                    <p>250+ викторин</p>
+                    <div class="category-hover">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Category 2 -->
+            <div class="col-md-3 col-sm-6">
+                <a href="#" class="category-card animate__animated animate__fadeInUp animate__delay-1s">
+                    <div class="category-icon category-science">
+                        <i class="bi bi-cpu"></i>
+                    </div>
+                    <h4>Наука</h4>
+                    <p>180+ викторин</p>
+                    <div class="category-hover">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Category 3 -->
+            <div class="col-md-3 col-sm-6">
+                <a href="#" class="category-card animate__animated animate__fadeInUp animate__delay-2s">
+                    <div class="category-icon category-history">
+                        <i class="bi bi-book"></i>
+                    </div>
+                    <h4>История</h4>
+                    <p>150+ викторин</p>
+                    <div class="category-hover">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Category 4 -->
+            <div class="col-md-3 col-sm-6">
+                <a href="#" class="category-card animate__animated animate__fadeInUp animate__delay-3s">
+                    <div class="category-icon category-sports">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <h4>Спорт</h4>
+                    <p>120+ викторин</p>
+                    <div class="category-hover">
+                        <i class="bi bi-arrow-right"></i>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section id="how-it-works" class="how-it-works-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title animate__animated animate__fadeInUp">
+                <i class="bi bi-play-circle me-2"></i>Как играть?
+            </h2>
+            <p class="section-subtitle animate__animated animate__fadeInUp animate__delay-1s">
+                Всего 3 шага до начала игры
+            </p>
+        </div>
+
+        <div class="steps-container">
+            <!-- Step 1 -->
+            <div class="step animate__animated animate__fadeInLeft">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </div>
+                    <h4>Регистрируйся</h4>
+                    <p>Создай аккаунт за 30 секунд. Укажи имя и почту - готово!</p>
+                </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="step animate__animated animate__fadeInLeft animate__delay-1s">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-icon">
+                        <i class="bi bi-search"></i>
+                    </div>
+                    <h4>Выбирай викторину</h4>
+                    <p>Найди интересную тему среди тысяч викторин или создай свою.</p>
+                </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="step animate__animated animate__fadeInLeft animate__delay-2s">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-icon">
+                        <i class="bi bi-controller"></i>
+                    </div>
+                    <h4>Играй и побеждай</h4>
+                    <p>Отвечай на вопросы, набирай очки и стань чемпионом!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Live Stats -->
+<section class="stats-section">
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-item animate__animated animate__fadeInUp">
+                <div class="stat-icon">
+                    <i class="bi bi-people"></i>
+                </div>
+                <h3 class="stat-number" data-count="5000">0</h3>
+                <p>Игроков онлайн</p>
+            </div>
+
+            <div class="stat-item animate__animated animate__fadeInUp animate__delay-1s">
+                <div class="stat-icon">
+                    <i class="bi bi-question-circle"></i>
+                </div>
+                <h3 class="stat-number" data-count="1500">0</h3>
+                <p>Активных викторин</p>
+            </div>
+
+            <div class="stat-item animate__animated animate__fadeInUp animate__delay-2s">
+                <div class="stat-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <h3 class="stat-number" data-count="45000">0</h3>
+                <p>Игр сыграно</p>
+            </div>
+
+            <div class="stat-item animate__animated animate__fadeInUp animate__delay-3s">
+                <div class="stat-icon">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <h3 class="stat-number" data-count="98">0</h3>
+                <p>% довольных игроков</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="footer-brand">
+                    <i class="bi bi-controller me-2"></i>
+                    <span class="brand-text">Fun<span class="brand-highlight">Quizzes</span></span>
+                </div>
+                <p class="footer-about mt-3">
+                    Платформа для интеллектуальных баталий.
+                    Создавай викторины, бросай вызов друзьям, становись чемпионом!
+                </p>
+            </div>
+
+            <div class="col-lg-2 col-md-4 mb-4">
+                <h5 class="footer-heading">Навигация</h5>
+                <ul class="footer-links">
+                    <li><a th:href="@{/}">Главная</a></li>
+                    <li><a href="#quizzes">Викторины</a></li>
+                    <li><a href="#categories">Категории</a></li>
+                    <li><a href="#how-it-works">Как играть?</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2 col-md-4 mb-4">
+                <h5 class="footer-heading">Аккаунт</h5>
+                <ul class="footer-links">
+                    <li><a th:href="@{/users/log-in}">Вход</a></li>
+                    <li><a th:href="@{/users/sing-up}">Регистрация</a></li>
+                    <li><a href="#">Профиль</a></li>
+                    <li><a href="#">Создать викторину</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-4 col-md-4 mb-4">
+                <h5 class="footer-heading">Контакты</h5>
+                <ul class="footer-contact">
+                    <li><i class="bi bi-envelope"></i> support@funquizzes.com</li>
+                    <li><i class="bi bi-telephone"></i> +375 (29) 123-45-67</li>
+                    <li><i class="bi bi-geo-alt"></i> Брест, Беларусь</li>
+                </ul>
+                <div class="footer-social mt-4">
+                    <a href="#" class="social-link"><i class="bi bi-telegram"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-vk"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-github"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <hr class="footer-divider my-4">
+
+        <div class="footer-bottom">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 FunQuizzes. Все права защищены.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="footer-link me-3">Политика</a>
+                    <a href="#" class="footer-link">Условия</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Counter Animation -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animated counters
+        const counters = document.querySelectorAll('.stat-number');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const counter = entry.target;
+                    const target = +counter.getAttribute('data-count');
+                    const duration = 2000;
+                    const step = target / (duration / 16);
+                    let current = 0;
+
+                    const updateCounter = () => {
+                        current += step;
+                        if (current < target) {
+                            counter.textContent = Math.floor(current);
+                            setTimeout(updateCounter, 16);
+                        } else {
+                            counter.textContent = target;
+                        }
+                    };
+
+                    updateCounter();
+                    observer.unobserve(counter);
+                }
+            });
+        }, { threshold: 0.5 });
+
+        counters.forEach(counter => observer.observe(counter));
+
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.querySelector('.navbar');
+            if (window.scrollY > 50) {
+                navbar.classList.add('scrolled');
+            } else {
+                navbar.classList.remove('scrolled');
+            }
+        });
+    });
+</script>
 </body>
 </html>
