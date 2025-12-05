@@ -17,19 +17,21 @@ public class SecurityConfiguration {
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(customizer -> customizer
+                        // Публичные пути
                         .requestMatchers(
-                                "/",                         // Главная страница
-                                "/users/sing-up",            // Регистрация
-                                "/css/**",                   // CSS файлы
-                                "/js/**",                    // JS файлы
-                                "/images/**",                // Изображения
-                                "/favicon.ico"               // Favicon
+                                "/",
+                                "/users/sing-up",
+                                "/users/log-in",
+                                "/css/**",
+                                "/js/**",
+                                "/images/**",
+                                "/favicon.ico"
                         )
                         .permitAll()
-                        .requestMatchers(
-                                "/users/log-in"
-                        )
-                        .permitAll()
+                        // ✅ Пути викторин - только для авторизованных
+                        .requestMatchers("/quizzes/create", "/quizzes/my")
+                        .authenticated()
+                        // Остальные пути тоже требуют авторизации
                         .anyRequest()
                         .authenticated())
                 .formLogin(customizer -> customizer
