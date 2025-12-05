@@ -121,8 +121,8 @@
                         <span th:text="${#authentication.name}">Игрок</span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>Профиль</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="bi bi-plus-circle me-2"></i>Создать викторину</a></li>
+                        <li><a class="dropdown-item" th:href="@{/users/profile}"><i class="bi bi-person me-2"></i>Профиль</a></li>
+                        <li><a class="dropdown-item" th:href="@{/quizzes/create}"><i class="bi bi-plus-circle me-2"></i>Создать викторину</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form th:action="@{/users/logout}" method="post" class="mb-0">
