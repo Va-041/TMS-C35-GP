@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Статистика</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+  <link th:href="@{/css/index-style.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="container mt-4">
+    <div class="row">
+        <!-- Боковое меню -->
+        <div class="col-md-3">
+            <div th:replace="~{profile/sidebar :: sidebar}"></div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Статистика</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h1 class="display-5" th:text="${statistic.totalScore}">0</h1>
+                                    <p class="mb-0">Общий счет</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h1 class="display-5" th:text="${statistic.bestScore}">0</h1>
+                                    <p class="mb-0">Лучший результат</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h1 class="display-5" th:text="${statistic.totalQuizzesPlayed}">0</h1>
+                                    <p class="mb-0">Сыграно викторин</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h1 class="display-5" th:text="${statistic.totalQuizzesCreated}">0</h1>
+                                    <p class="mb-0">Создано викторин</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Детальная статистика</h6>
+                                </div>
+                                <div class="card-body">
+                                    <table class="table table-sm">
+                                        <tr>
+                                            <td>Правильных ответов:</td>
+                                            <td class="text-end" th:text="${statistic.totalCorrectAnswers}">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Правильных викторин:</td>
+                                            <td class="text-end" th:text="${statistic.totalCorrectQuestionsAnswers}">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Текущая серия побед:</td>
+                                            <td class="text-end" th:text="${statistic.winStreak}">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Лучшая серия побед:</td>
+                                            <td class="text-end" th:text="${statistic.longestWinStreak}">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Средний балл:</td>
+                                            <td class="text-end" th:text="${statistic.averageScore}">0</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Топ игроков</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Игрок</th>
+                                                <th class="text-end">Очки</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr th:each="player, stat : ${topPlayers}"
+                                                th:class="${player.user.id == user.id} ? 'table-primary'">
+                                                <td th:text="${stat.count}">1</td>
+                                                <td>
+                                                    <span th:text="${player.user.name}"></span>
+                                                    <small class="text-muted d-block" th:text="'@' + ${player.user.username}"></small>
+                                                </td>
+                                                <td class="text-end" th:text="${player.totalScore}">0</td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Прогресс-бары -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">Прогресс</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label>Активность: <span th:text="${statistic.totalQuizzesPlayed}">0</span> игр</label>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success"
+                                         th:style="'width: ' + ${#numbers.formatInteger(statistic.totalQuizzesPlayed * 10, 3, 'COMMA')} + '%;'"
+                                         th:attr="style='width: ' + ${statistic.totalQuizzesPlayed * 10} + '%;'">
+                                        <span th:text="${statistic.totalQuizzesPlayed}">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label>Творчество: <span th:text="${statistic.totalQuizzesCreated}">0</span> создано</label>
+                                <div class="progress">
+                                    <div class="progress-bar bg-info"
+                                         th:style="'width: ' + ${#numbers.formatInteger(statistic.totalQuizzesCreated * 20, 3, 'COMMA')} + '%;'"
+                                         th:attr="style='width: ' + ${statistic.totalQuizzesCreated * 20} + '%;'">
+                                        <span th:text="${statistic.totalQuizzesCreated}">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -7,6 +7,8 @@ import org.funquizzes.tmsc35gp.entity.User;
 import org.funquizzes.tmsc35gp.repository.QuizRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,6 +17,9 @@ public class QuizService {
 
     @Autowired
     private QuizRepository quizRepository;
+
+    @Autowired
+    private UserService userService;
 
     public void createQuiz(CreateQuizDto dto, User creator) {
 
@@ -44,9 +49,34 @@ public class QuizService {
 
         quiz.setQuestions(questions);
         quizRepository.save(quiz);
+        // Обновляем статистику пользователя
+        userService.incrementQuizzesCreated(creator.getUsername());
     }
 
     public List<Quiz> findByCreator(User creator) {
         return quizRepository.findByCreator(creator);
+    }
+
+    public List<Quiz> findPublicQuizzes() {
+        return quizRepository.findByIsPublicTrue();
+    }
+
+    @Transactional
+    public void recordQuizPlay(String username, int score, int correctAnswers, int totalQuestions) {
+
+        userService.incrementQuizzesPlayed(username);
+        userService.addScore(username, score);
+
+        //update correct answers stat
+        for (int i = 0; i < correctAnswers; i++) {
+            userService.addCorrectAnswer(username);
+        }
+
+        if(correctAnswers == totalQuestions) {
+            userService.addCorrectQuestion(username);
+        }
+
+        // подсчёт среднего балла счёта
+        userService.calculateAverageScore(username);
     }
 }

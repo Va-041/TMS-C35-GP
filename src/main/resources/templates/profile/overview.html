@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Профиль - FunQuizzes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+
+    <style>
+        /* Для совместимости с index-style.css */
+        :root {
+            --primary: #6d28d9;
+            --primary-dark: #5b21b6;
+            --primary-light: #8b5cf6;
+            --secondary: #f59e0b;
+            --accent: #ec4899;
+            --success: #10b981;
+            --info: #0ea5e9;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --light: #f8fafc;
+            --dark: #1e293b;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+<!-- Используем обновленный navbar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="profile-container">
+    <div class="profile-row">
+        <!-- Боковая панель -->
+        <div class="profile-sidebar">
+            <div th:replace="~{profile/sidebar :: sidebar}"></div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="profile-content">
+            <!-- Флеш-сообщения -->
+            <div th:if="${message}" class="profile-alert alert-success fade-in">
+                <div class="alert-icon">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+                <div class="alert-content">
+                    <div class="alert-title">Успешно!</div>
+                    <div class="alert-message" th:text="${message}"></div>
+                </div>
+            </div>
+
+            <!-- Карточка личной информации -->
+            <div class="profile-card slide-in">
+                <div class="profile-card-header">
+                    <h5 class="profile-card-title">
+                        <i class="bi bi-person-circle me-2"></i>Личная информация
+                    </h5>
+                    <a th:href="@{/users/profile/edit}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Редактировать
+                    </a>
+                </div>
+                <div class="profile-card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Имя:</strong> <span th:text="${user.name}"></span></p>
+                            <p><strong>Username:</strong> <span th:text="'@' + ${user.username}"></span></p>
+                            <p><strong>Email:</strong>
+                                <span th:if="${user.email}" th:text="${user.email}"></span>
+                                <span th:unless="${user.email}" class="text-muted">Не указан</span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Статус профиля:</strong>
+                                <span th:if="${user.publicProfile}" class="badge bg-success">Публичный</span>
+                                <span th:unless="${user.publicProfile}" class="badge bg-secondary">Приватный</span>
+                            </p>
+                            <p><strong>Дата регистрации:</strong>
+                                <span th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy')}"></span>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div th:if="${user.biography}" class="mt-3">
+                        <strong>О себе:</strong>
+                        <p th:text="${user.biography}" class="mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Быстрые действия -->
+            <div class="profile-card slide-in mt-4">
+                <div class="profile-card-header">
+                    <h5 class="profile-card-title">
+                        <i class="bi bi-lightning me-2"></i>Быстрые действия
+                    </h5>
+                </div>
+                <div class="profile-card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <a th:href="@{/quizzes/create}" class="btn btn-primary w-100 mb-2">
+                                <i class="bi bi-plus-circle me-1"></i>Создать викторину
+                            </a>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <a th:href="@{/users/profile/change-password}" class="btn btn-outline-primary w-100 mb-2">
+                                <i class="bi bi-key me-1"></i>Сменить пароль
+                            </a>
+                        </div>
+                        <div class="col-md-4 text-center">
+                            <a th:href="@{/users/profile/settings}" class="btn btn-outline-success w-100 mb-2">
+                                <i class="bi bi-gear me-1"></i>Настройки
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
