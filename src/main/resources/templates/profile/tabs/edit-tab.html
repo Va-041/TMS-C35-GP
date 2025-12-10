@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="edit">
+    <div class="profile-card">
+        <div class="profile-card-header">
+            <h5 class="profile-card-title">
+                <i class="bi bi-pencil me-2"></i>Редактировать профиль
+            </h5>
+        </div>
+        <div class="profile-card-body">
+            <form th:action="@{/users/profile/edit}" th:object="${updateProfileDto}" method="post" class="profile-form">
+                <div class="form-group">
+                    <label class="form-label">Имя</label>
+                    <input type="text" class="form-control-profile" th:field="*{name}" required>
+                    <div class="form-text">Ваше отображаемое имя</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-control-profile" th:field="*{username}" required>
+                    <div class="form-text">Ваш уникальный идентификатор</div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control-profile" th:field="*{email}" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">О себе</label>
+                    <textarea class="form-control-profile" th:field="*{biography}" rows="3"
+                              placeholder="Расскажите о себе..."></textarea>
+                    <div class="form-text">Максимум 500 символов</div>
+                </div>
+
+                <div class="form-group">
+                    <div class="form-check-profile">
+                        <input type="checkbox" class="form-check-input-profile"
+                               th:field="*{publicProfile}" id="isPublicProfile">
+                        <label class="form-check-label-profile" for="isPublicProfile">Публичный профиль</label>
+                    </div>
+                    <div class="form-text">Если включено, другие пользователи смогут просматривать ваш профиль</div>
+                </div>
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a th:href="@{/users/profile/main(tab='overview')}" class="btn-profile btn-profile-outline">
+                        <i class="bi bi-arrow-left me-1"></i>Отмена
+                    </a>
+                    <button type="submit" class="btn-profile btn-profile-primary">
+                        <i class="bi bi-check-lg me-1"></i>Сохранить изменения
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</html>

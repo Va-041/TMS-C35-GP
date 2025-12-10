@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="overview">
+    <!-- Карточка личной информации -->
+    <div class="profile-card slide-in">
+        <div class="profile-card-header">
+            <h5 class="profile-card-title">
+                <i class="bi bi-person-circle me-2"></i>Личная информация
+            </h5>
+            <a th:href="@{/users/profile/main(tab='edit')}" class="btn btn-primary btn-sm">
+                <i class="bi bi-pencil me-1"></i>Редактировать
+            </a>
+        </div>
+        <div class="profile-card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>Имя:</strong> <span th:text="${user.name}"></span></p>
+                    <p><strong>Username:</strong> <span th:text="'@' + ${user.username}"></span></p>
+                    <p><strong>Email:</strong>
+                        <span th:if="${user.email}" th:text="${user.email}"></span>
+                        <span th:unless="${user.email}" class="text-muted">Не указан</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Статус профиля:</strong>
+                        <span th:if="${user.publicProfile}" class="badge-profile badge-success">
+                <i class="bi bi-globe me-1"></i>Публичный
+            </span>
+                        <span th:unless="${user.publicProfile}" class="badge-profile badge-gray">
+                <i class="bi bi-lock me-1"></i>Приватный
+            </span>
+                    </p>
+                    <p><strong>Уведомления:</strong>
+                        <span th:if="${user.receiveNotifications}" class="badge-profile badge-info">
+                <i class="bi bi-bell me-1"></i>Включены
+            </span>
+                        <span th:unless="${user.receiveNotifications}" class="badge-profile badge-gray">
+                <i class="bi bi-bell-slash me-1"></i>Выключены
+            </span>
+                    </p>
+                    <p><strong>Дата регистрации:</strong>
+                        <span th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy')}"></span>
+                    </p>
+                </div>
+            </div>
+
+            <div th:if="${user.biography}" class="mt-3">
+                <strong>О себе:</strong>
+                <p th:text="${user.biography}" class="mt-1 p-3 bg-light rounded"></p>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

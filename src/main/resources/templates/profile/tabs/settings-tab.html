@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<div th:fragment="settings">
+  <div class="profile-card">
+    <div class="profile-card-header">
+      <h5 class="profile-card-title">
+        <i class="bi bi-gear me-2"></i>Настройки
+      </h5>
+    </div>
+    <div class="profile-card-body">
+      <form th:action="@{/users/profile/settings/notifications}" method="post" class="profile-form">
+        <h6 class="mb-3">Настройки уведомлений</h6>
+        <div class="form-group">
+          <div class="form-check-profile">
+            <input type="checkbox" class="form-check-input-profile"
+                   th:checked="${user.receiveNotifications}"
+                   name="receiveNotifications" id="receiveNotifications">
+            <label class="form-check-label-profile" for="receiveNotifications">
+              Получать уведомления
+            </label>
+          </div>
+          <div class="form-text">Получать уведомления о новых викторинах, результатах и обновлениях</div>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+          <a th:href="@{/users/profile/main(tab='overview')}" class="btn-profile btn-profile-outline">
+            <i class="bi bi-arrow-left me-1"></i>Назад
+          </a>
+          <button type="submit" class="btn-profile btn-profile-primary">
+            <i class="bi bi-save me-1"></i>Сохранить настройки
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+</html>

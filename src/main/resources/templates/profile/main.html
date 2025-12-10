@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title th:text="'Профиль - ' + ${user.name}">Профиль - FunQuizzes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+  <link th:href="@{/css/index-style.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="profile-container">
+  <div class="profile-row">
+    <!-- Боковая панель -->
+    <div class="profile-sidebar">
+      <div th:replace="~{profile/sidebar :: sidebar}"></div>
+    </div>
+
+    <!-- Основной контент с вкладками -->
+    <div class="profile-content">
+
+      <!-- Сообщения -->
+      <div th:if="${message}" class="profile-alert alert-success fade-in mb-4">
+        <div class="alert-icon">
+          <i class="bi bi-check-circle"></i>
+        </div>
+        <div class="alert-content">
+          <div class="alert-title">Успешно!</div>
+          <div class="alert-message" th:text="${message}"></div>
+        </div>
+      </div>
+
+      <!-- Контент вкладок -->
+      <div class="tab-content">
+
+        <!-- Вкладка Обзор -->
+        <div th:if="${activeTab == 'overview'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/overview-tab :: overview}"></div>
+        </div>
+
+        <!-- Вкладка Статистика -->
+        <div th:if="${activeTab == 'statistic'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/statistic-tab :: statistic}"></div>
+        </div>
+
+        <!-- Вкладка Мои викторины -->
+        <div th:if="${activeTab == 'my-quizzes'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/my-quizzes-tab :: my-quizzes}"></div>
+        </div>
+
+        <!-- Вкладка История игр -->
+        <div th:if="${activeTab == 'game-history'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/game-history-tab :: game-history}"></div>
+        </div>
+
+        <!-- Вкладка Друзья -->
+        <div th:if="${activeTab == 'friends'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/friends-tab :: friends}"></div>
+        </div>
+
+        <!-- Вкладка Достижения -->
+        <div th:if="${activeTab == 'achievements'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/achievements-tab :: achievements}"></div>
+        </div>
+
+        <!-- Вкладка Активность -->
+        <div th:if="${activeTab == 'activity'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/activity-tab :: activity}"></div>
+        </div>
+
+        <!-- Вкладка Редактировать -->
+        <div th:if="${activeTab == 'edit'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/edit-tab :: edit}"></div>
+        </div>
+
+        <!-- Вкладка Смена пароля -->
+        <div th:if="${activeTab == 'change-password'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/change-password-tab :: change-password}"></div>
+        </div>
+
+        <!-- Вкладка Настройки -->
+        <div th:if="${activeTab == 'settings'}" class="tab-pane fade show active">
+          <div th:replace="~{profile/tabs/settings-tab :: settings}"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

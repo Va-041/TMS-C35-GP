@@ -22,13 +22,17 @@ public class SecurityConfiguration {
                                 "/",
                                 "/users/sing-up",
                                 "/users/log-in",
+                                "/users/profile/view/**", //публичные профили
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
-                                "/favicon.ico"
+                                "/favicon.ico",
+                                "/fragments/**"
                         )
                         .permitAll()
-                        // ✅ Пути викторин - только для авторизованных
+                        //только для авторизованных
+                        .requestMatchers("/users/profile/**")
+                        .authenticated()
                         .requestMatchers("/quizzes/create", "/quizzes/my")
                         .authenticated()
                         // Остальные пути тоже требуют авторизации
