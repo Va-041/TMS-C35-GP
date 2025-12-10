@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" >
 <div th:fragment="sidebar">
     <div class="sidebar-card">
         <!-- Заголовок сайдбара с аватаркой -->
@@ -44,8 +44,8 @@
         <div class="sidebar-nav">
             <!-- Обзор профиля -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile}"
-               th:classappend="${activePage == 'overview' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='overview')}"
+               th:classappend="${activeTab == 'overview'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-house-door"></i>
                 </span>
@@ -54,8 +54,8 @@
 
             <!-- Статистика -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile/statistic}"
-               th:classappend="${activePage == 'statistic' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='statistic')}"
+               th:classappend="${activeTab == 'statistic'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-bar-chart"></i>
                 </span>
@@ -64,8 +64,8 @@
 
             <!-- Мои викторины -->
             <a class="nav-item-profile"
-               th:href="@{/quizzes/my}"
-               th:classappend="${activePage == 'my-quizzes' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='my-quizzes')}"
+               th:classappend="${activeTab == 'my-quizzes'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-question-circle"></i>
                 </span>
@@ -74,8 +74,8 @@
 
             <!-- История игр -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile/game-history}"
-               th:classappend="${activePage == 'game-history' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='game-history')}"
+               th:classappend="${activeTab == 'game-history'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-clock-history"></i>
                 </span>
@@ -84,8 +84,8 @@
 
             <!-- Друзья -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile/friends}"
-               th:classappend="${activePage == 'friends' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='friends')}"
+               th:classappend="${activeTab == 'friends'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-people"></i>
                 </span>
@@ -94,8 +94,8 @@
 
             <!-- Достижения -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile/achievements}"
-               th:classappend="${activePage == 'achievements' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='achievements')}"
+               th:classappend="${activeTab == 'achievements'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-trophy"></i>
                 </span>
@@ -104,8 +104,8 @@
 
             <!-- Активность -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile/activity}"
-               th:classappend="${activePage == 'activity' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='activity')}"
+               th:classappend="${activeTab == 'activity'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-activity"></i>
                 </span>
@@ -114,8 +114,8 @@
 
             <!-- Настройки -->
             <a class="nav-item-profile"
-               th:href="@{/users/profile/settings}"
-               th:classappend="${activePage == 'settings' ? 'active' : ''}">
+               th:href="@{/users/profile/main(tab='settings')}"
+               th:classappend="${activeTab == 'settings'} ? 'active' : ''">
                 <span class="nav-icon">
                     <i class="bi bi-gear"></i>
                 </span>
@@ -133,14 +133,14 @@
                     <span>Создать викторину</span>
                 </a>
 
-                <a class="quick-action-item" th:href="@{/users/profile/change-password}">
+                <a class="quick-action-item" th:href="@{/users/profile/main(tab='change-password')}">
                     <span class="action-icon-small">
                         <i class="bi bi-key"></i>
                     </span>
                     <span>Сменить пароль</span>
                 </a>
 
-                <a class="quick-action-item" th:href="@{/users/profile/edit}">
+                <a class="quick-action-item" th:href="@{/users/profile/main(tab='edit')}">
                     <span class="action-icon-small">
                         <i class="bi bi-pencil"></i>
                     </span>

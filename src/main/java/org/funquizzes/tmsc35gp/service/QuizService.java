@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,6 +60,16 @@ public class QuizService {
 
     public List<Quiz> findPublicQuizzes() {
         return quizRepository.findByIsPublicTrue();
+    }
+
+    public Quiz findById(Long id) {
+        Optional<Quiz> quiz = quizRepository.findById(id);
+        return quiz.orElse(null);
+    }
+
+    @Transactional
+    public void deleteQuiz(Long id) {
+        quizRepository.deleteById(id);
     }
 
     @Transactional

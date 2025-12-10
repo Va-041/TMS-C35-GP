@@ -10,11 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,6 +28,7 @@ public class QuizController {
     @Autowired
     private UserService userService;
 
+    // create quiz
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         CreateQuizDto dto = new CreateQuizDto();
@@ -49,7 +50,32 @@ public class QuizController {
 
         quizService.createQuiz(dto, creator);
 
-        return "redirect:/quizzes/my";
+        String encodedMessage = URLEncoder.encode("Викторина успешно создана", StandardCharsets.UTF_8);
+
+        return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
+    }
+
+    // delete quiz
+    @GetMapping("/delete/{id}")
+    public String deleteQuiz(@PathVariable Long id, Authentication authentication,
+                             RedirectAttributes redirectAttributes) {
+
+        try {
+            Quiz quiz = quizService.findById(id);
+            User currentUser = (User) userService.loadUserByUsername(authentication.getName());
+
+            if(quiz != null && quiz.getCreator().getId().equals(currentUser.getId())) {
+                quizService.deleteQuiz(id);
+                String encodedMessage = URLEncoder.encode("Викторина успешно удалена", StandardCharsets.UTF_8);
+                return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
+            } else {
+                String encodedMessage = URLEncoder.encode("Вы не можете удалить эту викторину", StandardCharsets.UTF_8);
+                return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
+            }
+        } catch (Exception e) {
+            String encodedMessage = URLEncoder.encode("Ошибка при удалении викторины", StandardCharsets.UTF_8);
+            return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
+        }
     }
 
     @GetMapping("/my")
