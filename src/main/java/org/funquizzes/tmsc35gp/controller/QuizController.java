@@ -1,16 +1,19 @@
 package org.funquizzes.tmsc35gp.controller;
 
+import jakarta.validation.Valid;
 import org.funquizzes.tmsc35gp.dto.CreateQuestionDto;
 import org.funquizzes.tmsc35gp.dto.CreateQuizDto;
-import org.funquizzes.tmsc35gp.entity.Quiz;
-import org.funquizzes.tmsc35gp.entity.User;
+import org.funquizzes.tmsc35gp.entity.*;
+import org.funquizzes.tmsc35gp.service.CategoryService;
 import org.funquizzes.tmsc35gp.service.QuizService;
 import org.funquizzes.tmsc35gp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.net.URLEncoder;
@@ -24,35 +27,91 @@ public class QuizController {
 
     @Autowired
     private QuizService quizService;
-
     @Autowired
     private UserService userService;
+    @Autowired
+    private CategoryService categoryService;
 
-    // create quiz
+
+    // страница создание викторины
     @GetMapping("/create")
     public String showCreateForm(Model model) {
         CreateQuizDto dto = new CreateQuizDto();
         List<CreateQuestionDto> questions = new ArrayList<>();
-        for(int i = 1; i <= 3; i++) {
-            questions.add(new CreateQuestionDto());
+
+        for(int i = 1; i <= 10; i++) {
+            CreateQuestionDto question = new CreateQuestionDto();
+            question.setQuestionIndex(i);
+            question.setType(QuestionType.SINGLE_CHOICE);
+            question.setPoints(100);
+            question.setTimeLimitSeconds(30);
+
+            // варианты ответов по умолчанию: 4
+            List<String> options = new ArrayList<>();
+            options.add("Вариант 1");
+            options.add("Вариант 2");
+            options.add("Вариант 3");
+            options.add("Вариант 4");
+            question.setOptions(options);
+
+            questions.add(question);
         }
-        dto.setQuestion(questions);
+        dto.setQuestions(questions);
+
+        // список категорий
+        List<Category> categories = categoryService.getAllActiveCategories();
 
         model.addAttribute("quizDto", dto);
-        return "createQuiz";
+        model.addAttribute("categories", categories);
+        model.addAttribute("difficultyLevels", DifficultyLevel.values());
+        model.addAttribute("questionTypes", QuestionType.values());
+
+        return "quizzes/create";
     }
 
+    // создание викторины по запросу
     @PostMapping("/create")
-    public String createQuiz(@ModelAttribute CreateQuizDto dto, Authentication authentication) {
+    public String createQuiz(@Valid @ModelAttribute("quizDto") CreateQuizDto dto, BindingResult bindingResult,
+                             Authentication authentication,
+                             Model model) {
 
-        String username = authentication.getName();
-        User creator = (User) userService.loadUserByUsername(username);
+        System.out.println("Начало создания викторины");
+        System.out.println("Количество вопросов: " + (dto.getQuestions() != null ? dto.getQuestions().size() : 0));
 
-        quizService.createQuiz(dto, creator);
+        if (bindingResult.hasErrors()) {
+            System.out.println("Ошибки валидации: " + bindingResult.getAllErrors());
 
-        String encodedMessage = URLEncoder.encode("Викторина успешно создана", StandardCharsets.UTF_8);
+            List<Category> categories = categoryService.getAllActiveCategories();
+            model.addAttribute("categories", categories);
+            model.addAttribute("difficultyLevels", DifficultyLevel.values());
+            model.addAttribute("questionTypes", QuestionType.values());
 
-        return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
+            return "quizzes/create";
+        }
+
+        try {
+            String username = authentication.getName();
+            User creator = (User) userService.loadUserByUsername(username);
+
+            System.out.println("Создатель: " + creator.getUsername());
+            quizService.createQuiz(dto, creator);
+            System.out.println("Викторина создана успешно");
+
+            String encodedMessage = URLEncoder.encode("Викторина успешно создана", StandardCharsets.UTF_8);
+            return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
+
+        } catch (Exception e) {
+            System.out.println("Ошибка при создании викторины: " + e.getMessage());
+            e.printStackTrace();
+
+            List<Category> categories = categoryService.getAllActiveCategories();
+            model.addAttribute("categories", categories);
+            model.addAttribute("difficultyLevels", DifficultyLevel.values());
+            model.addAttribute("questionTypes", QuestionType.values());
+            model.addAttribute("error", e.getMessage());
+
+            return "redirect:/quizzes/create";
+        }
     }
 
     // delete quiz
@@ -64,7 +123,7 @@ public class QuizController {
             Quiz quiz = quizService.findById(id);
             User currentUser = (User) userService.loadUserByUsername(authentication.getName());
 
-            if(quiz != null && quiz.getCreator().getId().equals(currentUser.getId())) {
+            if (quiz != null && quiz.getCreator().getId().equals(currentUser.getId())) {
                 quizService.deleteQuiz(id);
                 String encodedMessage = URLEncoder.encode("Викторина успешно удалена", StandardCharsets.UTF_8);
                 return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
@@ -85,6 +144,40 @@ public class QuizController {
         List<Quiz> quizzes = quizService.findByCreator(user);
         model.addAttribute("quizzes", quizzes);
 
-        return "myQuizzes";
+        return "quizzes/my";
+    }
+
+    @PostMapping("/upload-image")
+    @ResponseBody
+    public String uploadImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String imagePath = quizService.saveImage(file);
+            return "{\"success\": true, \"path\": \"" + imagePath + "\"}";
+        } catch (Exception e) {
+            return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    @GetMapping("/add-question")
+    public String addQuestionFragment(@RequestParam("index") int index, Model model) {
+        CreateQuestionDto question = new CreateQuestionDto();
+        question.setQuestionIndex(index + 1);
+        question.setType(QuestionType.SINGLE_CHOICE);
+        question.setPoints(100);
+        question.setTimeLimitSeconds(30);
+
+        // 4 варианта ответа по умолчанию
+        List<String> options = new ArrayList<>();
+        options.add("Вариант 1");
+        options.add("Вариант 2");
+        options.add("Вариант 3");
+        options.add("Вариант 4");
+        question.setOptions(options);
+
+        model.addAttribute("question", question);
+        model.addAttribute("questionIndex", index);
+        model.addAttribute("questionTypes", QuestionType.values());
+
+        return "fragments/question-form :: questionForm";
     }
 }
