@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div th:fragment="questionForm(questionIndex, question)">
+    <div class="question-card" th:id="|question-${questionIndex}|" data-index="${questionIndex}">
+        <div class="question-card-header">
+            <div class="question-number" th:text="'Вопрос ' + (${questionIndex} + 1)">Вопрос 1</div>
+            <button type="button" class="btn-quiz btn-quiz-danger btn-quiz-sm" onclick="removeQuestion(this)">
+                <i class="bi bi-trash"></i> Удалить
+            </button>
+        </div>
+        <div class="question-card-body">
+            <!-- Скрытое поле для индекса вопроса -->
+            <input type="hidden" th:name="|questions[${questionIndex}].questionIndex|"
+                   th:value="${question != null ? question.questionIndex : questionIndex}" />
+
+            <div class="quiz-grid">
+                <div class="quiz-form-group">
+                    <label th:for="|question-text-${questionIndex}|" class="quiz-form-label">
+                        <i class="bi bi-chat-text"></i>Текст вопроса *
+                    </label>
+                    <textarea class="quiz-form-control" th:id="|question-text-${questionIndex}|"
+                              th:name="|questions[${questionIndex}].text|"
+                              rows="3" maxlength="1000" required
+                              placeholder="Введите текст вопроса"
+                              th:text="${question?.text}"></textarea>
+                </div>
+
+                <div class="quiz-form-group">
+                    <label th:for="|question-type-${questionIndex}|" class="quiz-form-label">
+                        <i class="bi bi-list-check"></i>Тип вопроса *
+                    </label>
+                    <select class="quiz-form-select question-type-select"
+                            th:id="|question-type-${questionIndex}|"
+                            th:name="|questions[${questionIndex}].type|"
+                            th:attr="data-index=${questionIndex}"
+                            onchange="changeQuestionType(this)">
+                        <option th:each="type : ${T(org.funquizzes.tmsc35gp.entity.QuestionType).values()}"
+                                th:value="${type}"
+                                th:text="${type.displayName}"
+                                th:selected="${question?.type == type or
+                                             (question == null and type == T(org.funquizzes.tmsc35gp.entity.QuestionType).SINGLE_CHOICE)}">
+                        </option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="quiz-grid">
+                <div class="quiz-form-group">
+                    <label th:for="|question-points-${questionIndex}|" class="quiz-form-label">
+                        <i class="bi bi-trophy"></i>Баллы
+                    </label>
+                    <input type="number" class="quiz-form-control"
+                           th:id="|question-points-${questionIndex}|"
+                           th:name="|questions[${questionIndex}].points|"
+                           min="10" max="1000"
+                           th:value="${question?.points != null ? question.points : 100}">
+                </div>
+
+                <div class="quiz-form-group">
+                    <label th:for="|question-time-${questionIndex}|" class="quiz-form-label">
+                        <i class="bi bi-stopwatch"></i>Время (сек)
+                    </label>
+                    <input type="number" class="quiz-form-control"
+                           th:id="|question-time-${questionIndex}|"
+                           th:name="|questions[${questionIndex}].timeLimitSeconds|"
+                           min="10" max="300"
+                           th:value="${question?.timeLimitSeconds != null ? question.timeLimitSeconds : 30}">
+                </div>
+            </div>
+
+            <!-- Изображение вопроса -->
+            <div class="quiz-form-group">
+                <label th:for="|question-image-${questionIndex}|" class="quiz-form-label">
+                    <i class="bi bi-image"></i>Изображение к вопросу
+                </label>
+                <input type="text" class="quiz-form-control" th:id="|question-image-${questionIndex}|"
+                       th:name="|questions[${questionIndex}].image|"
+                       th:value="${question?.image}"
+                       placeholder="URL изображения">
+                <button type="button" class="btn-quiz btn-quiz-outline btn-quiz-sm mt-1"
+                        th:onclick="|uploadImage('question-image-${questionIndex}')|">
+                    <i class="bi bi-upload me-1"></i>Загрузить изображение
+                </button>
+            </div>
+
+            <!-- ВАРИАНТЫ ОТВЕТОВ -->
+            <div th:id="|options-container-${questionIndex}|">
+                <div class="options-header mb-3">
+                    <label class="quiz-form-label d-block mb-2">
+                        <i class="bi bi-list-ul"></i>Варианты ответов *
+                    </label>
+
+                    <div class="d-flex flex-column gap-2" th:id="|options-list-${questionIndex}|">
+                        <!-- Динамическое отображение вариантов -->
+                        <div th:if="${question?.options != null and !question.options.isEmpty()}">
+                            <div th:each="option, iter : ${question.options}" class="option-row d-flex align-items-center gap-2">
+                                <div class="option-checkbox">
+                                    <input th:type="${question.type == 'MULTIPLE_CHOICE' ? 'checkbox' : 'radio'}"
+                                           th:id="|option-correct-${questionIndex}-${iter.index}|"
+                                           th:name="|questions[${questionIndex}].correctAnswers|"
+                                           th:value="${iter.index}"
+                                           th:checked="${question?.correctAnswers != null and
+                                                        question.correctAnswers.contains(iter.index.toString())}">
+                                </div>
+                                <input type="text" class="quiz-form-control option-text"
+                                       th:id="|option-text-${questionIndex}-${iter.index}|"
+                                       th:name="|questions[${questionIndex}].options|"
+                                       th:value="${option}"
+                                       th:placeholder="|Вариант ${iter.index + 1}|"
+                                       required>
+                                <input type="hidden"
+                                       th:name="|questions[${questionIndex}].optionImages|"
+                                       th:value="${question?.optionImages != null and
+                                                  iter.index < question.optionImages.size() ?
+                                                  question.optionImages[iter.index] : ''}">
+                            </div>
+                        </div>
+                        <div th:unless="${question?.options != null and !question.options.isEmpty()}">
+                            <!-- -->
+                            <div class="option-row d-flex align-items-center gap-2">
+                                <div class="option-checkbox">
+                                    <input type="radio" th:id="|option-correct-${questionIndex}-0|"
+                                           th:name="|questions[${questionIndex}].correctAnswers|"
+                                           value="0" checked>
+                                </div>
+                                <input type="text" class="quiz-form-control option-text"
+                                       th:id="|option-text-${questionIndex}-0|"
+                                       th:name="|questions[${questionIndex}].options|"
+                                       placeholder="Вариант 1"
+                                       required>
+                                <input type="hidden" th:name="|questions[${questionIndex}].optionImages|" value="">
+                            </div>
+                            <div class="option-row d-flex align-items-center gap-2">
+                                <div class="option-checkbox">
+                                    <input type="radio" th:id="|option-correct-${questionIndex}-1|"
+                                           th:name="|questions[${questionIndex}].correctAnswers|"
+                                           value="1">
+                                </div>
+                                <input type="text" class="quiz-form-control option-text"
+                                       th:id="|option-text-${questionIndex}-1|"
+                                       th:name="|questions[${questionIndex}].options|"
+                                       placeholder="Вариант 2"
+                                       required>
+                                <input type="hidden" th:name="|questions[${questionIndex}].optionImages|" value="">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Кнопка добавления варианта -->
+                    <button type="button" class="btn-quiz btn-quiz-outline btn-quiz-sm mt-2"
+                            th:onclick="|addOption(${questionIndex})|">
+                        <i class="bi bi-plus-circle me-1"></i>Добавить вариант
+                    </button>
+                </div>
+
+                <!-- Подсказка -->
+                <div class="quiz-form-text mb-2" th:id="|options-hint-${questionIndex}|">
+                    <span th:if="${question?.type == 'SINGLE_CHOICE' or question?.type == 'TRUE_FALSE'}">
+                        Выберите один правильный ответ (отметьте кружком)
+                    </span>
+                    <span th:if="${question?.type == 'MULTIPLE_CHOICE'}">
+                        Выберите один или несколько правильных ответов (отметьте галочкой)
+                    </span>
+                    <span th:unless="${question?.type == 'SINGLE_CHOICE' or
+                                      question?.type == 'MULTIPLE_CHOICE' or
+                                      question?.type == 'TRUE_FALSE'}">
+                        Выберите один правильный ответ (отметьте кружком)
+                    </span>
+                </div>
+            </div>
+
+            <!-- ТЕКСТОВЫЙ ОТВЕТ -->
+            <div th:id="|text-answer-container-${questionIndex}|"
+                 th:style="${question?.type == 'TEXT_INPUT' ? 'display: block;' : 'display: none;'}">
+                <div class="quiz-form-group">
+                    <label th:for="|question-text-answer-${questionIndex}|" class="quiz-form-label">
+                        <i class="bi bi-keyboard"></i>Правильный текст ответа *
+                    </label>
+                    <input type="text" class="quiz-form-control"
+                           th:id="|question-text-answer-${questionIndex}|"
+                           th:name="|questions[${questionIndex}].correctTextAnswer|"
+                           th:value="${question?.correctTextAnswer}"
+                           placeholder="Введите правильный ответ">
+                </div>
+                <div class="quiz-form-switch">
+                    <input type="checkbox" th:id="|question-case-sensitive-${questionIndex}|"
+                           th:name="|questions[${questionIndex}].caseSensitive|"
+                           th:checked="${question?.caseSensitive}">
+                    <label th:for="|question-case-sensitive-${questionIndex}|" class="quiz-form-label">
+                        Учитывать регистр
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</html>

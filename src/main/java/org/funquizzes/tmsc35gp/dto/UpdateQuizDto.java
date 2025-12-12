@@ -11,7 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateQuizDto {
+public class UpdateQuizDto {
 
     @NotBlank(message = "Название обязательно")
     @Size(min = 3, max = 100, message = "Название должно быть от 3 до 100 символов")
@@ -28,12 +28,11 @@ public class CreateQuizDto {
     @NotNull(message = "Необходимо указать уровень сложности викторины")
     private DifficultyLevel difficultyLevel = DifficultyLevel.MEDIUM;
 
-    // шапка квиза
     private String headImage;
 
     @Min(value = 10, message = "Минимальное количество вопросов: 10")
     @Max(value = 30, message = "Максимальное количество вопросов: 30")
-    private Integer maxQuestions = 10;
+    private Integer maxQuestions;
 
     @Min(value = 2, message = "Время на викторину должно быть не менее 2 минуты")
     @Max(value = 150, message = "Время на викторину не должно превышать 2.5 часов")
@@ -42,4 +41,6 @@ public class CreateQuizDto {
     @NotNull(message = "Вопросы обязательны")
     @Size(min = 10, max = 30, message = "Количество вопросов должно быть от 10 до 30")
     private List<CreateQuestionDto> questions;
+
+    private Long id; // ID викторины для редактирования
 }
