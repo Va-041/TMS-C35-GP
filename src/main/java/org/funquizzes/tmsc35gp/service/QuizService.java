@@ -1,7 +1,7 @@
 package org.funquizzes.tmsc35gp.service;
 
-import org.funquizzes.tmsc35gp.dto.CreateQuestionDto;
 import org.funquizzes.tmsc35gp.dto.CreateQuizDto;
+import org.funquizzes.tmsc35gp.dto.UpdateQuizDto;
 import org.funquizzes.tmsc35gp.entity.*;
 import org.funquizzes.tmsc35gp.repository.CategoryRepository;
 import org.funquizzes.tmsc35gp.repository.QuizRepository;
@@ -37,7 +37,7 @@ public class QuizService {
     private QuestionService questionService;
 
     // path to upload images
-    private final String uploadImagesDir = "src/main/resouces/static/images/";
+    private final String uploadImagesDir = "src/main/resources/static/images/";
 
     @Transactional
     public Quiz createQuiz(CreateQuizDto dto, User creator) {
@@ -80,6 +80,73 @@ public class QuizService {
         return saveQuiz;
     }
 
+    @Transactional
+    public Quiz updateQuiz(UpdateQuizDto dto, Quiz existingQuiz, User updater) {
+        // пользователь является создателем
+        if (!existingQuiz.getCreator().getId().equals(updater.getId())) {
+            throw new SecurityException("Только создатель может редактировать викторину");
+        }
+
+        // обновляем основные поля
+        existingQuiz.setTitle(dto.getTitle());
+        existingQuiz.setDescription(dto.getDescription());
+        existingQuiz.setIsPublic(dto.isPublic());
+        existingQuiz.setDifficultyLevel(dto.getDifficultyLevel());
+        existingQuiz.setHeadImageUrl(dto.getHeadImage());
+        existingQuiz.setMaxQuestions(dto.getMaxQuestions());
+        existingQuiz.setTimeLimitMinutes(dto.getTimeLimitMinutes());
+
+        // обновляем категорию
+        if (dto.getCategoryId() != null) {
+            Category category = categoryService.getCategoryById(dto.getCategoryId());
+            existingQuiz.setCategory(category);
+        } else {
+            existingQuiz.setCategory(null);
+        }
+
+        // удаляем старые вопросы
+        existingQuiz.getQuestions().clear();
+
+        // создаем и добавляем новые вопросы
+        List<Question> updatedQuestions = questionService.createQuestionsFromDto(dto.getQuestions(), existingQuiz);
+        existingQuiz.getQuestions().addAll(updatedQuestions);
+
+        // проверяем количество вопросов
+        if (updatedQuestions.size() < 10 || updatedQuestions.size() > 30) {
+            throw new IllegalArgumentException("Количество вопросов в викторине должно быть от 10 до 30");
+        }
+
+        // устанавливаем порядок вопросов
+        for (int i = 0; i < updatedQuestions.size(); i++) {
+            updatedQuestions.get(i).setQuestionIndex(i + 1);
+        }
+
+        return quizRepository.save(existingQuiz);
+    }
+
+    @Transactional
+    public void deleteQuiz(Long id) {
+        quizRepository.deleteById(id);
+    }
+
+    @Transactional
+    public Quiz saveQuiz(Quiz quiz) {
+        return quizRepository.save(quiz);
+    }
+
+    public Quiz findById(Long id) {
+        Optional<Quiz> quiz = quizRepository.findById(id);
+        return quiz.orElse(null);
+    }
+
+    public Quiz getPublicQuizById(Long id) {
+        Quiz quiz = findById(id);
+        if (quiz != null && quiz.isPublic()) {
+            return quiz;
+        }
+        return null;
+    }
+
     public List<Quiz> findByCreator(User creator) {
         return quizRepository.findByCreator(creator);
     }
@@ -111,28 +178,6 @@ public class QuizService {
 
 
 
-    @Transactional
-    public Quiz saveQuiz(Quiz quiz) {
-        return quizRepository.save(quiz);
-    }
-
-    public Quiz findById(Long id) {
-        Optional<Quiz> quiz = quizRepository.findById(id);
-        return quiz.orElse(null);
-    }
-
-    public Quiz getPublicQuizById(Long id) {
-        Quiz quiz = findById(id);
-        if (quiz != null && quiz.isPublic()) {
-            return quiz;
-        }
-        return null;
-    }
-
-    @Transactional
-    public void deleteQuiz(Long id) {
-        quizRepository.deleteById(id);
-    }
 
     @Transactional
     public void incrementPlaysCount(Long quizId) {
@@ -173,7 +218,6 @@ public class QuizService {
         if (correctAnswers == totalQuestions) {
             userService.addCorrectQuestion(username);
         }
-
         // подсчёт среднего балла счёта
         userService.calculateAverageScore(username);
     }
