@@ -418,5 +418,30 @@
     margin-bottom: 1.5rem;
 }
 
+/* Стили для опций с отдельными полями */
+.option-row {
+    margin-bottom: 0.5rem;
+}
+
+.option-checkbox {
+    min-width: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.option-checkbox input[type="checkbox"],
+.option-checkbox input[type="radio"] {
+    width: 18px;
+    height: 18px;
+}
+
+.option-text {
+    flex: 1;
+}
+
+.true-false-hidden {
+    display: none !important;
+}
 
 

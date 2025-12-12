@@ -27,8 +27,27 @@ public class CreateQuestionDto {
     private List<String> optionImages;
 
     private List<String> correctAnswers;
-    private String correctTextAnswers;
+
+    // для вопросов с выбором
+    @AssertTrue(message = "Для вопросов с выбором должен быть указан хотя бы один правильный ответ")
+    public boolean isChoiceAnswerValid() {
+        if (type == QuestionType.SINGLE_CHOICE || type == QuestionType.MULTIPLE_CHOICE || type == QuestionType.TRUE_FALSE) {
+            return correctAnswers != null && !correctAnswers.isEmpty();
+        }
+        return true;
+    }
+
+    private String correctTextAnswer;
     private Boolean caseSensitive = false;
+
+    // для текстовых вопросов
+    @AssertTrue(message = "Для текстового вопроса должен быть указан правильный ответ")
+    public boolean isTextAnswerValid() {
+        if (type == QuestionType.TEXT_INPUT) {
+            return correctTextAnswer != null && !correctTextAnswer.trim().isEmpty();
+        }
+        return true;
+    }
 
     @Min(value = 50, message = "Минимальное количество баллов: 50")
     @Max(value = 1000, message = "Максимальное количество баллов: 1000")
