@@ -37,6 +37,9 @@ public class QuestionService {
                 // correctAnswers содержит "0" для Правда или "1" для Ложь
                 if (dto.getCorrectAnswers() != null && !dto.getCorrectAnswers().isEmpty()) {
                     question.setCorrectAnswers(dto.getCorrectAnswers());
+                } else {
+                    // По умолчанию устанавливаем "Правда" как правильный ответ
+                    question.setCorrectAnswers(List.of("0"));
                 }
                 break;
 
@@ -48,16 +51,21 @@ public class QuestionService {
                 question.setOptions(dto.getOptions());
                 question.setOptionsImage(dto.getOptionImages());
 
-                // валидация правильных ответов
-                validateCorrectAnswers(dto.getOptions(), dto.getCorrectAnswers(), dto.getType());
-                question.setCorrectAnswers(dto.getCorrectAnswers());
+                // Валидация правильных ответов только если они есть
+                if (dto.getCorrectAnswers() != null && !dto.getCorrectAnswers().isEmpty()) {
+                    validateCorrectAnswers(dto.getOptions(), dto.getCorrectAnswers(), dto.getType());
+                    question.setCorrectAnswers(dto.getCorrectAnswers());
+                } else {
+                    // Для вопросов с выбором должен быть хотя бы один правильный ответ
+                    throw new IllegalArgumentException("Необходимо указать хотя бы один правильный ответ");
+                }
                 break;
 
             case TEXT_INPUT:
-                if (dto.getCorrectTextAnswers() == null || dto.getCorrectTextAnswers().trim().isEmpty()) {
+                if (dto.getCorrectTextAnswer() == null || dto.getCorrectTextAnswer().trim().isEmpty()) {
                     throw new IllegalArgumentException("Для текстового вопроса необходимо указать правильный ответ");
                 }
-                question.setCorrectTextAnswer(dto.getCorrectTextAnswers());
+                question.setCorrectTextAnswer(dto.getCorrectTextAnswer());
                 question.setCaseSensitive(dto.getCaseSensitive() != null ? dto.getCaseSensitive() : false);
                 break;
 
@@ -68,9 +76,7 @@ public class QuestionService {
 
     // валидируем правильные ответы для вопросов с выбором
     private void validateCorrectAnswers(List<String> options, List<String> correctAnswers, QuestionType type) {
-        if (correctAnswers == null || correctAnswers.isEmpty()) {
-            throw new IllegalArgumentException("Необходимо указать хотя бы один правильный ответ");
-        }
+        // Уже проверено, что correctAnswers не null и не пустой
 
         if (type == QuestionType.SINGLE_CHOICE && correctAnswers.size() > 1) {
             throw new IllegalArgumentException("Для вопроса с одиночным выбором может быть только один правильный ответ");

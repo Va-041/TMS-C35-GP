@@ -39,20 +39,24 @@ public class QuizController {
         CreateQuizDto dto = new CreateQuizDto();
         List<CreateQuestionDto> questions = new ArrayList<>();
 
-        for(int i = 1; i <= 10; i++) {
+        for(int i = 0; i < 10; i++) {
             CreateQuestionDto question = new CreateQuestionDto();
             question.setQuestionIndex(i);
             question.setType(QuestionType.SINGLE_CHOICE);
             question.setPoints(100);
             question.setTimeLimitSeconds(30);
 
-            // варианты ответов по умолчанию: 4
+            // 2 варианта ответа по умолчанию (не 4)
             List<String> options = new ArrayList<>();
             options.add("Вариант 1");
             options.add("Вариант 2");
-            options.add("Вариант 3");
-            options.add("Вариант 4");
             question.setOptions(options);
+
+            // Пустые изображения
+            List<String> optionImages = new ArrayList<>();
+            optionImages.add("");
+            optionImages.add("");
+            question.setOptionImages(optionImages);
 
             questions.add(question);
         }
@@ -75,11 +79,70 @@ public class QuizController {
                              Authentication authentication,
                              Model model) {
 
-        System.out.println("Начало создания викторины");
-        System.out.println("Количество вопросов: " + (dto.getQuestions() != null ? dto.getQuestions().size() : 0));
+        System.out.println("=== ПРОВЕРКА ВОПРОСОВ ===");
+        if (dto.getQuestions() != null) {
+            for (int i = 0; i < dto.getQuestions().size(); i++) {
+                CreateQuestionDto question = dto.getQuestions().get(i);
+                System.out.println("Вопрос " + (i + 1) + ":");
+                System.out.println("  Тип: " + question.getType());
+                System.out.println("  Опции: " + question.getOptions());
+                System.out.println("  Кол-во опций: " + (question.getOptions() != null ? question.getOptions().size() : 0));
+                System.out.println("  OptionImages: " + question.getOptionImages());
+                System.out.println("  Правильные ответы: " + question.getCorrectAnswers());
+                System.out.println("  Текст ответ: " + question.getCorrectTextAnswer());
+
+                // Проверка валидации
+                System.out.println("  isChoiceAnswerValid(): " + question.isChoiceAnswerValid());
+                System.out.println("  isTextAnswerValid(): " + question.isTextAnswerValid());
+
+                // Проверка для TRUE_FALSE
+                if (question.getType() == QuestionType.TRUE_FALSE) {
+                    System.out.println("  TRUE_FALSE - правильные ответы должны быть 0 или 1: " + question.getCorrectAnswers());
+                }
+            }
+        }
+
+        System.out.println("=== НАЧАЛО СОЗДАНИЯ ВИКТОРИНЫ ===");
+        System.out.println("Название: " + dto.getTitle());
+        System.out.println("Описание: " + dto.getDescription());
+        System.out.println("Публичная: " + dto.isPublic());
+        System.out.println("Уровень сложности: " + dto.getDifficultyLevel());
+        System.out.println("Категория ID: " + dto.getCategoryId());
+        System.out.println("Макс вопросов: " + dto.getMaxQuestions());
+        System.out.println("Ограничение времени: " + dto.getTimeLimitMinutes());
+
+        if (dto.getQuestions() != null) {
+            System.out.println("Количество вопросов: " + dto.getQuestions().size());
+            for (int i = 0; i < dto.getQuestions().size(); i++) {
+                CreateQuestionDto question = dto.getQuestions().get(i);
+                System.out.println("--- Вопрос " + (i + 1) + " ---");
+                System.out.println("Текст: " + question.getText());
+                System.out.println("Тип: " + question.getType());
+                System.out.println("Баллы: " + question.getPoints());
+                System.out.println("Время: " + question.getTimeLimitSeconds());
+                System.out.println("Индекс: " + question.getQuestionIndex());
+
+                if (question.getOptions() != null) {
+                    System.out.println("Варианты: " + question.getOptions());
+                    System.out.println("Кол-во вариантов: " + question.getOptions().size());
+                }
+
+                if (question.getCorrectAnswers() != null) {
+                    System.out.println("Правильные ответы: " + question.getCorrectAnswers());
+                }
+
+                if (question.getCorrectTextAnswer() != null) {
+                    System.out.println("Текстовый ответ: " + question.getCorrectTextAnswer());
+                }
+            }
+        } else {
+            System.out.println("Вопросы: NULL!");
+        }
 
         if (bindingResult.hasErrors()) {
-            System.out.println("Ошибки валидации: " + bindingResult.getAllErrors());
+            System.out.println("=== ОШИБКИ ВАЛИДАЦИИ ===");
+            bindingResult.getAllErrors().forEach(error ->
+                    System.out.println(error.getDefaultMessage()));
 
             List<Category> categories = categoryService.getAllActiveCategories();
             model.addAttribute("categories", categories);
@@ -94,23 +157,23 @@ public class QuizController {
             User creator = (User) userService.loadUserByUsername(username);
 
             System.out.println("Создатель: " + creator.getUsername());
-            quizService.createQuiz(dto, creator);
-            System.out.println("Викторина создана успешно");
+            Quiz createdQuiz = quizService.createQuiz(dto, creator);
+            System.out.println("Викторина создана успешно, ID: " + createdQuiz.getId());
 
             String encodedMessage = URLEncoder.encode("Викторина успешно создана", StandardCharsets.UTF_8);
             return "redirect:/users/profile/main?tab=my-quizzes&message=" + encodedMessage;
 
         } catch (Exception e) {
-            System.out.println("Ошибка при создании викторины: " + e.getMessage());
+            System.out.println("=== ОШИБКА ПРИ СОЗДАНИИ ВИКТОРИНЫ ===");
             e.printStackTrace();
 
             List<Category> categories = categoryService.getAllActiveCategories();
             model.addAttribute("categories", categories);
             model.addAttribute("difficultyLevels", DifficultyLevel.values());
             model.addAttribute("questionTypes", QuestionType.values());
-            model.addAttribute("error", e.getMessage());
+            model.addAttribute("error", "Ошибка: " + e.getMessage());
 
-            return "redirect:/quizzes/create";
+            return "quizzes/create";
         }
     }
 
@@ -162,17 +225,21 @@ public class QuizController {
     public String addQuestionFragment(@RequestParam("index") int index, Model model) {
         CreateQuestionDto question = new CreateQuestionDto();
         question.setQuestionIndex(index + 1);
-        question.setType(QuestionType.SINGLE_CHOICE);
+        question.setType(QuestionType.SINGLE_CHOICE); // По умолчанию один правильный ответ
         question.setPoints(100);
         question.setTimeLimitSeconds(30);
 
-        // 4 варианта ответа по умолчанию
+        // 2 варианта ответа по умолчанию
         List<String> options = new ArrayList<>();
         options.add("Вариант 1");
         options.add("Вариант 2");
-        options.add("Вариант 3");
-        options.add("Вариант 4");
         question.setOptions(options);
+
+        // Пустые изображения для вариантов
+        List<String> optionImages = new ArrayList<>();
+        optionImages.add("");
+        optionImages.add("");
+        question.setOptionImages(optionImages);
 
         model.addAttribute("question", question);
         model.addAttribute("questionIndex", index);

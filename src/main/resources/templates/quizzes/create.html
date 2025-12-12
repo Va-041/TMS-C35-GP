@@ -170,7 +170,8 @@
                     <!-- Проверяем, есть ли questions в quizDto -->
                     <div th:if="${quizDto?.questions != null and !quizDto.questions.isEmpty()}">
                         <div th:each="question, stat : ${quizDto.questions}">
-                            <div th:replace="~{fragments/question-form :: questionForm(${stat.index})}"></div>
+                            <div th:replace="~{fragments/question-form :: questionForm(${stat.index})}"
+                                 th:with="questionTypes=${questionTypes}"></div>
                         </div>
                     </div>
                     <!-- Если questions нет или пуст, добавляем 10 пустых вопросов по умолчанию -->
@@ -288,6 +289,28 @@
             }
         });
 
+        // Инициализация типов вопросов для всех существующих вопросов
+        const typeSelects = document.querySelectorAll('.question-type-select');
+        typeSelects.forEach(select => {
+            changeQuestionType(select);
+        });
+
+        const allQuestions = document.querySelectorAll('.question-card');
+        allQuestions.forEach((questionDiv, index) => {
+            const optionsContainer = document.getElementById(`options-list-${index}`);
+            if (optionsContainer) {
+                const checkedInputs = optionsContainer.querySelectorAll('input:checked');
+                if (checkedInputs.length === 0) {
+                    // Если ни один ответ не выбран, выбираем первый
+                    const firstInput = optionsContainer.querySelector('input[type="radio"], input[type="checkbox"]');
+                    if (firstInput) {
+                        firstInput.checked = true;
+                    }
+                }
+            }
+        });
+
+
         updateQuestionCount();
     });
 
@@ -316,23 +339,297 @@
         const type = select.value;
         const optionsContainer = document.getElementById('options-container-' + index);
         const textAnswerContainer = document.getElementById('text-answer-container-' + index);
+        const optionsHint = document.getElementById('options-hint-' + index);
+        const optionsList = document.getElementById('options-list-' + index);
 
         if (type === 'TEXT_INPUT') {
-            if (optionsContainer) optionsContainer.style.display = 'none';
-            if (textAnswerContainer) textAnswerContainer.style.display = 'block';
-        } else {
-            if (optionsContainer) optionsContainer.style.display = 'block';
-            if (textAnswerContainer) textAnswerContainer.style.display = 'none';
+            if (optionsContainer) {
+                optionsContainer.style.display = 'none';
 
-            if (type === 'TRUE_FALSE') {
-                // автоматически ставим варианты "Правда/Ложь"
-                const optionsInput = document.getElementById('question-options-' + index);
-                if (optionsInput && optionsInput.value === '') {
-                    optionsInput.value = 'Правда\nЛожь';
+                // Делаем поля необязательными для TEXT_INPUT
+                const requiredInputs = optionsContainer.querySelectorAll('[required]');
+                requiredInputs.forEach(input => {
+                    input.removeAttribute('required');
+                });
+
+                // Очищаем correctAnswers для TEXT_INPUT
+                const correctAnswerInputs = optionsContainer.querySelectorAll('input[name*="correctAnswers"]');
+                correctAnswerInputs.forEach(input => {
+                    input.disabled = true; // Отключаем, чтобы не отправлялись
+                });
+            }
+
+            if (textAnswerContainer) {
+                textAnswerContainer.style.display = 'block';
+
+                // Делаем текстовое поле обязательным
+                const textAnswerInput = textAnswerContainer.querySelector('input[name*="correctTextAnswer"]');
+                if (textAnswerInput) {
+                    textAnswerInput.setAttribute('required', 'required');
+                }
+            }
+        } else {
+            if (optionsContainer) {
+                optionsContainer.style.display = 'block';
+
+                // Восстанавливаем обязательность полей
+                const optionTextInputs = optionsContainer.querySelectorAll('.option-text');
+                optionTextInputs.forEach(input => {
+                    input.setAttribute('required', 'required');
+                });
+
+                // Восстанавливаем correctAnswers
+                const correctAnswerInputs = optionsContainer.querySelectorAll('input[name*="correctAnswers"]');
+                correctAnswerInputs.forEach(input => {
+                    input.disabled = false;
+                });
+            }
+
+            if (textAnswerContainer) {
+                textAnswerContainer.style.display = 'none';
+
+                // Убираем обязательность с текстового ответа
+                const textAnswerInput = textAnswerContainer.querySelector('input[name*="correctTextAnswer"]');
+                if (textAnswerInput) {
+                    textAnswerInput.removeAttribute('required');
+                }
+            }
+
+            // Обновляем подсказку и тип выбора в зависимости от типа вопроса
+            if (optionsHint) {
+                switch (type) {
+                    case 'SINGLE_CHOICE':
+                        optionsHint.textContent = 'Выберите один правильный ответ (отметьте кружком)';
+                        updateInputsToRadio(index);
+                        resetOptionsForNonTrueFalse(index);
+                        break;
+                    case 'MULTIPLE_CHOICE':
+                        optionsHint.textContent = 'Выберите один или несколько правильных ответов (отметьте галочкой)';
+                        updateInputsToCheckbox(index);
+                        resetOptionsForNonTrueFalse(index);
+                        break;
+                    case 'TRUE_FALSE':
+                        optionsHint.textContent = 'Выберите один правильный ответ (отметьте кружком)';
+                        updateInputsToRadio(index);
+                        setTrueFalseOptions(index);
+                        break;
                 }
             }
         }
     }
+
+    // Обновление на радио-кнопки для одного выбора
+    function updateInputsToRadio(index) {
+        const container = document.getElementById('options-list-' + index);
+        const inputs = container.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+
+        inputs.forEach(input => {
+            input.type = 'radio';
+            input.name = `questions[${index}].correctAnswers`;
+        });
+    }
+
+    // Обновление на чекбоксы для множественного выбора
+    function updateInputsToCheckbox(index) {
+        const container = document.getElementById('options-list-' + index);
+        const inputs = container.querySelectorAll('input[type="radio"], input[type="checkbox"]');
+
+        inputs.forEach(input => {
+            input.type = 'checkbox';
+            input.name = `questions[${index}].correctAnswers`;
+        });
+    }
+
+    function resetOptionsForNonTrueFalse(index) {
+        const container = document.getElementById('options-list-' + index);
+        const addButton = container.parentElement.querySelector('button[onclick^="addOption"]');
+
+        // Показываем кнопку добавления
+        if (addButton) {
+            addButton.style.display = 'block';
+        }
+
+        // Восстанавливаем возможность добавлять варианты
+        const optionRows = container.querySelectorAll('.option-row');
+        if (optionRows.length < 2) {
+            // Добавляем недостающие варианты если их меньше 2
+            for (let i = optionRows.length; i < 2; i++) {
+                const newOptionHtml = `
+            <div class="option-row d-flex align-items-center gap-2">
+                <div class="option-checkbox">
+                    <input type="radio"
+                           id="option-correct-${index}-${i}"
+                           name="questions[${index}].correctAnswers"
+                           value="${i}"
+                           ${i === 0 ? 'checked' : ''}> <!-- По умолчанию выбираем первый вариант -->
+                </div>
+                <input type="text" class="quiz-form-control option-text"
+                       id="option-text-${index}-${i}"
+                       name="questions[${index}].options"
+                       placeholder="Вариант ${i + 1}"
+                       required>
+                <input type="hidden" name="questions[${index}].optionImages" value="">
+            </div>
+        `;
+                container.insertAdjacentHTML('beforeend', newOptionHtml);
+            }
+        } else {
+            // Убедимся, что у первого варианта есть checked атрибут
+            const firstRadio = container.querySelector('input[type="radio"], input[type="checkbox"]');
+            if (firstRadio && !container.querySelector('input:checked')) {
+                firstRadio.checked = true;
+            }
+        }
+    }
+
+    function setTrueFalseOptions(index) {
+        const container = document.getElementById('options-list-' + index);
+        const textInputs = container.querySelectorAll('.option-text');
+        const addButton = container.parentElement.querySelector('button[onclick^="addOption"]');
+
+        // Удаляем все существующие варианты
+        const allOptions = container.querySelectorAll('.option-row');
+        allOptions.forEach(option => option.remove());
+
+        // Добавляем фиксированные варианты для TRUE_FALSE
+        const trueFalseOptions = ['Правда', 'Ложь'];
+
+        trueFalseOptions.forEach((optionText, i) => {
+            const newOptionHtml = `
+        <div class="option-row d-flex align-items-center gap-2">
+            <div class="option-checkbox">
+                <input type="radio"
+                       id="option-correct-${index}-${i}"
+                       name="questions[${index}].correctAnswers"
+                       value="${i}"
+                       ${i === 0 ? 'checked' : ''}> <!-- По умолчанию выбираем "Правда" -->
+            </div>
+            <input type="text" class="quiz-form-control option-text"
+                   id="option-text-${index}-${i}"
+                   name="questions[${index}].options"
+                   value="${optionText}"
+                   readonly
+                   style="background-color: #f8f9fa; cursor: not-allowed;">
+            <input type="hidden" name="questions[${index}].optionImages" value="">
+        </div>
+    `;
+            container.insertAdjacentHTML('beforeend', newOptionHtml);
+        });
+
+        // Скрываем кнопку добавления варианта
+        if (addButton) {
+            addButton.style.display = 'none';
+        }
+    }
+
+    function addOption(questionIndex) {
+        const container = document.getElementById('options-list-' + questionIndex);
+        if (!container) {
+            console.error('Контейнер options-list-' + questionIndex + ' не найден');
+            return;
+        }
+
+        const questionType = document.getElementById(`question-type-${questionIndex}`).value;
+
+        // Для TRUE_FALSE нельзя добавлять больше 2 вариантов
+        if (questionType === 'TRUE_FALSE') {
+            alert('Для типа "Правда/Ложь" можно использовать только 2 варианта ответа');
+            return;
+        }
+
+        const optionCount = container.querySelectorAll('.option-row').length;
+
+        if (optionCount >= 10) {
+            alert('Максимальное количество вариантов: 10');
+            return;
+        }
+
+        // Определяем тип input в зависимости от типа вопроса
+        let inputType = 'radio'; // по умолчанию
+        if (questionType === 'MULTIPLE_CHOICE') {
+            inputType = 'checkbox';
+        }
+
+        const newOptionHtml = `
+    <div class="option-row d-flex align-items-center gap-2">
+        <div class="option-checkbox">
+            <input type="${inputType}"
+                   id="option-correct-${questionIndex}-${optionCount}"
+                   name="questions[${questionIndex}].correctAnswers"
+                   value="${optionCount}">
+        </div>
+        <input type="text" class="quiz-form-control option-text"
+               id="option-text-${questionIndex}-${optionCount}"
+               name="questions[${questionIndex}].options"
+               placeholder="Вариант ${optionCount + 1}"
+               required>
+        <!-- Добавить скрытое поле для изображения варианта -->
+        <input type="hidden" name="questions[${questionIndex}].optionImages" value="">
+    </div>
+`;
+
+        container.insertAdjacentHTML('beforeend', newOptionHtml);
+    }
+
+    document.getElementById('quizForm').addEventListener('submit', function(event) {
+        let isValid = true;
+        const errorMessages = [];
+
+        const questions = document.querySelectorAll('.question-card');
+
+        questions.forEach((questionDiv, index) => {
+            const type = document.getElementById(`question-type-${index}`).value;
+
+            if (type === 'TEXT_INPUT') {
+                // Проверка текстового ответа
+                const textAnswer = document.getElementById(`question-text-answer-${index}`);
+                if (!textAnswer || textAnswer.value.trim() === '') {
+                    isValid = false;
+                    errorMessages.push(`Вопрос ${index + 1}: для текстового вопроса необходимо указать правильный ответ`);
+                }
+            } else if (type === 'SINGLE_CHOICE' || type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE') {
+                // Проверка выбора правильного ответа
+                const container = document.getElementById(`options-list-${index}`);
+                if (container) {
+                    const checkedInputs = container.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked');
+
+                    if (checkedInputs.length === 0) {
+                        isValid = false;
+                        errorMessages.push(`Вопрос ${index + 1}: необходимо выбрать хотя бы один правильный ответ`);
+                    }
+
+                    if (type === 'SINGLE_CHOICE' && checkedInputs.length > 1) {
+                        isValid = false;
+                        errorMessages.push(`Вопрос ${index + 1}: для одиночного выбора можно выбрать только один ответ`);
+                    }
+                }
+            }
+        });
+
+        if (!isValid) {
+            event.preventDefault();
+
+            // Показать ошибки пользователю
+            let errorHtml = '<h5><i class="bi bi-exclamation-triangle"></i> Ошибки в вопросах:</h5><ul>';
+            errorMessages.forEach(msg => {
+                errorHtml += `<li>${msg}</li>`;
+            });
+            errorHtml += '</ul>';
+
+            // Создать или обновить блок с ошибками
+            let errorDiv = document.querySelector('.validation-errors');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger validation-errors';
+                const form = document.getElementById('quizForm');
+                form.insertBefore(errorDiv, form.firstChild);
+            }
+            errorDiv.innerHTML = errorHtml;
+
+            // Прокрутить к ошибкам
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
 
     function uploadImage(targetFieldId) {
         const input = document.getElementById('imageUploadInput');

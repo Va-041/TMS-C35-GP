@@ -37,7 +37,7 @@ public class QuizService {
     private QuestionService questionService;
 
     // path to upload images
-    private final String uploadImagesDir = "src/main/resouces/static/images/";
+    private final String uploadImagesDir = "src/main/resources/static/images/";
 
     @Transactional
     public Quiz createQuiz(CreateQuizDto dto, User creator) {
