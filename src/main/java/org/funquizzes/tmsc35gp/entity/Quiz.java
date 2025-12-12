@@ -55,8 +55,6 @@ public class Quiz {
     @OneToMany(mappedBy = "quiz", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Question> questions = new ArrayList<>();
 
-    @OneToMany(mappedBy = "quiz")
-    private List<QuizRating> ratings = new ArrayList<>();
 
     @CreationTimestamp
     private LocalDateTime createdAt;

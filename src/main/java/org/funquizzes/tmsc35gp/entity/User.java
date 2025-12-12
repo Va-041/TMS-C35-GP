@@ -37,6 +37,12 @@ public class User implements UserDetails {
     private LocalDateTime lastLoginAt;
 
     @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(
+            name = "user_roles",
+            joinColumns = @JoinColumn(name = "user_id")
+    )
+    @Column(name = "roles")
+    @Enumerated(EnumType.STRING)
     private Set<Role> roles = new HashSet<>();
 
     @Override
