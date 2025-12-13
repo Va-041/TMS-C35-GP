@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Фрагмент списка викторин</title>
+</head>
+<body>
+
+<div th:fragment="quizzesList">
+    <!-- Quizzes Header -->
+    <div class="quizzes-header">
+        <div class="quizzes-count">
+            <span th:if="${quizzes != null && !quizzes.empty}">
+                Найдено <span class="count-number" th:text="${totalElements}">0</span> викторин
+            </span>
+            <span th:unless="${quizzes != null && !quizzes.empty}">
+                Викторины не найдены
+            </span>
+        </div>
+        <div class="view-toggle" th:if="${quizzes != null && !quizzes.empty}">
+            <button class="view-toggle-btn" data-view="grid" id="gridViewBtn">
+                <i class="bi bi-grid-3x3-gap"></i>
+            </button>
+            <button class="view-toggle-btn" data-view="list" id="listViewBtn">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- No Results -->
+    <div th:if="${quizzes != null && quizzes.empty}" class="no-results">
+        <div class="no-results-icon">
+            <i class="bi bi-question-circle"></i>
+        </div>
+        <h3 class="no-results-title">Викторины не найдены</h3>
+        <p class="no-results-text">
+            <span th:if="${noResultsMessage != null}" th:text="${noResultsMessage}">
+                Попробуйте изменить параметры поиска или сбросить фильтры
+            </span>
+            <span th:unless="${noResultsMessage != null}">
+                Попробуйте изменить параметры поиска или сбросить фильтры
+            </span>
+        </p>
+        <div class="no-results-actions">
+            <a th:href="@{/quizzes}" class="btn btn-outline-primary me-2">
+                <i class="bi bi-funnel me-1"></i>Сбросить фильтры
+            </a>
+            <a th:href="@{/quizzes/create}" class="btn btn-primary" th:if="${#authorization.expression('isAuthenticated()') && selectedCategory != null && !hasQuizzesInCategory}">
+                <i class="bi bi-plus-circle me-2"></i>Создать первую викторину в категории <span th:text="${selectedCategory.name}"></span>
+            </a>
+            <a th:href="@{/quizzes/create}" class="btn btn-primary" th:unless="${selectedCategory != null && !hasQuizzesInCategory}" th:if="${#authorization.expression('isAuthenticated()')}">
+                <i class="bi bi-plus-circle me-2"></i>Создать первую викторину
+            </a>
+        </div>
+    </div>
+
+    <!-- Quizzes Grid/List -->
+    <div th:if="${quizzes != null && !quizzes.empty}"
+         class="quiz-card-grid"
+         id="quizzesContainer">
+        <div th:each="quiz : ${quizzes}" class="quiz-card">
+            <div class="quiz-header">
+                <span class="quiz-category" th:text="${quiz.category?.name} ?: 'Без категории'"></span>
+                <span th:classappend="${'quiz-difficulty ' + quiz.difficultyLevel.name().toLowerCase()}"
+                      th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
+                (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></span>
+            </div>
+            <div class="quiz-body">
+                <h3 class="quiz-title" th:text="${quiz.title}"></h3>
+                <p class="quiz-description" th:text="${quiz.description}"></p>
+
+                <!-- Rating -->
+                <div class="quiz-rating" th:if="${quiz.averageRating != null && quiz.averageRating > 0}">
+                    <div class="stars">
+                        <i th:each="i : ${#numbers.sequence(1, 5)}"
+                           th:classappend="${i <= quiz.averageRating} ? 'bi bi-star-fill' : 'bi bi-star'">
+                        </i>
+                    </div>
+                    <span class="rating-count" th:text="${quiz.ratingCounts != null ? quiz.ratingCounts + ' оценок' : 'Нет оценок'}"></span>
+                </div>
+
+                <div class="quiz-meta-extended">
+                    <div class="quiz-plays">
+                        <i class="bi bi-play-circle"></i>
+                        <span th:text="${quiz.playsCount != null ? quiz.playsCount + ' игр' : '0 игр'}"></span>
+                    </div>
+                    <div class="quiz-date">
+                        <i class="bi bi-calendar"></i>
+                        <span th:text="${quiz.createdAt != null ? #temporals.format(quiz.createdAt, 'dd.MM.yyyy') : 'Неизвестно'}"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="quiz-footer">
+                <a th:href="@{/quiz/play/{id}(id=${quiz.id})}" class="btn btn-primary btn-sm mb-2" th:if="${#authorization.expression('isAuthenticated()')}">
+                    <i class="bi bi-play-fill me-1"></i>Играть
+                </a>
+                <a th:href="@{/quiz/view/{id}(id=${quiz.id})}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-info-circle me-1"></i>Подробнее
+                </a>
+                <div class="quiz-meta mt-3">
+                    <div class="quiz-author">
+                        <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
+                             alt="Author"
+                             class="author-avatar">
+                        <div>
+                            <div class="author-name" th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></div>
+                            <small>Создатель</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div th:if="${page != null && page.totalPages > 1}" class="pagination-container">
+        <nav>
+            <ul class="pagination">
+                <!-- Previous page -->
+                <li th:classappend="${page.number == 0} ? 'disabled' : ''" class="page-item">
+                    <a class="page-link"
+                       th:if="${page.number > 0}"
+                       th:href="@{/quizzes(page=${page.number - 1}, size=${page.size},
+                              search=${search},
+                              categories=${categories != null ? #strings.join(selectedCategories, ',') : null},
+                              difficulty=${difficulty},
+                              sort=${sort})}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                    <span class="page-link disabled" th:unless="${page.number > 0}">
+                        <i class="bi bi-chevron-left"></i>
+                    </span>
+                </li>
+
+                <!-- Page numbers -->
+                <li th:each="pageNum : ${#numbers.sequence(1, page.totalPages)}"
+                    th:classappend="${page.number + 1 == pageNum} ? 'active' : ''"
+                    class="page-item">
+                    <a class="page-link"
+                       th:href="@{/quizzes(page=${pageNum - 1}, size=${page.size},
+                              search=${search},
+                              categories=${categories != null ? #strings.join(selectedCategories, ',') : null},
+                              difficulty=${difficulty},
+                              sort=${sort})}"
+                       th:text="${pageNum}"></a>
+                </li>
+
+                <!-- Next page -->
+                <li th:classappend="${page.number + 1 == page.totalPages} ? 'disabled' : ''" class="page-item">
+                    <a class="page-link"
+                       th:if="${page.number + 1 < page.totalPages}"
+                       th:href="@{/quizzes(page=${page.number + 1}, size=${page.size},
+                              search=${search},
+                              categories=${categories != null ? #strings.join(selectedCategories, ',') : null},
+                              difficulty=${difficulty},
+                              sort=${sort})}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                    <span class="page-link disabled" th:unless="${page.number + 1 < page.totalPages}">
+                        <i class="bi bi-chevron-right"></i>
+                    </span>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+</body>
+</html>

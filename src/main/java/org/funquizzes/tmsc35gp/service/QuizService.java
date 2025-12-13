@@ -176,6 +176,27 @@ public class QuizService {
         return quizRepository.findTopRatedQuizzes(pageable);
     }
 
+    public Page<Quiz> findPublicQuizzesByCategories(List<Long> categoryIds, Pageable pageable) {
+        return quizRepository.findPublicQuizzesByCategories(categoryIds, pageable);
+    }
+
+    public Page<Quiz> findPublicQuizzesWithFilters(List<Long> categoryIds, List<DifficultyLevel> difficulties, Pageable pageable) {
+        return quizRepository.findPublicQuizzesWithFilters(categoryIds, difficulties, pageable);
+    }
+
+    // Новые методы для проверки существования викторин
+    public boolean existsByCategoryIdAndPublicTrue(Long categoryId) {
+        return quizRepository.existsByCategoryIdAndPublicTrue(categoryId);
+    }
+
+    public long countByCategoryIdAndPublicTrue(Long categoryId) {
+        return quizRepository.countByCategoryIdAndPublicTrue(categoryId);
+    }
+
+    public boolean existsByCategoryIdsAndPublicTrue(List<Long> categoryIds) {
+        return quizRepository.existsByCategoryIdsAndPublicTrue(categoryIds);
+    }
+
 
 
 

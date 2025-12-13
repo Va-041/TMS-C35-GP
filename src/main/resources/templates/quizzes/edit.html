@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактирование викторины</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+    <link th:href="@{/css/create-quiz-style.css}" rel="stylesheet">
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+</head>
+<body>
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<div class="create-quiz-container">
+
+    <!-- Шапка страницы -->
+    <div class="create-quiz-header slide-in">
+        <h1><i class="bi bi-plus-circle"></i>Редактирование викторины</h1>
+        <p>Редактируйте ранее созданную вами уникальную викторину. Минимум 10 вопросов, максимум 30. Все поля, отмеченные *, обязательны для заполнения.</p>
+    </div>
+
+    <form th:action="@{/quizzes/edit}" th:object="${quizDto}" method="post" id="quizForm">
+
+        <!-- Добавить скрытое поле для ID викторины -->
+        <input type="hidden" th:name="id" th:value="${quizDto.id}" />
+
+        <!-- Сообщения об ошибках -->
+        <div th:if="${#fields.hasErrors('*')}" class="alert alert-danger">
+            <h5><i class="bi bi-exclamation-triangle"></i> Ошибки при заполнении формы:</h5>
+            <ul class="mb-0">
+                <li th:each="err : ${#fields.errors('*')}" th:text="${err}"></li>
+            </ul>
+        </div>
+
+        <div th:if="${error != null}" class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span th:text="${error}"></span>
+        </div>
+
+        <!-- Основная информация -->
+        <div class="create-quiz-card fade-in">
+            <div class="create-quiz-card-header">
+                <h5><i class="bi bi-info-circle"></i>Основная информация</h5>
+            </div>
+            <div class="create-quiz-card-body">
+                <div class="quiz-grid">
+                    <div class="quiz-form-group">
+                        <label for="title" class="quiz-form-label">
+                            <i class="bi bi-pencil"></i>Название викторины *
+                        </label>
+                        <input type="text" class="quiz-form-control" id="title" th:field="*{title}"
+                               th:classappend="${#fields.hasErrors('title')} ? 'is-invalid' : ''"
+                               required minlength="3" maxlength="100" placeholder="Введите название викторины">
+                        <div th:if="${#fields.hasErrors('title')}" class="invalid-feedback" th:errors="*{title}"></div>
+                        <div class="quiz-form-text">От 3 до 100 символов</div>
+                    </div>
+
+                    <div class="quiz-form-group">
+                        <label for="difficulty" class="quiz-form-label">
+                            <i class="bi bi-bar-chart"></i>Уровень сложности *
+                        </label>
+                        <select class="quiz-form-select" id="difficulty" th:field="*{difficultyLevel}">
+                            <option value="" disabled selected>Выберите сложность</option>
+                            <option th:each="level : ${difficultyLevels}"
+                                    th:value="${level}"
+                                    th:text="${level.displayName}"></option>
+                        </select>
+
+                    </div>
+                </div>
+
+                <div class="quiz-form-group">
+                    <label for="description" class="quiz-form-label">
+                        <i class="bi bi-text-paragraph"></i>Описание
+                    </label>
+                    <textarea class="quiz-form-control" id="description" th:field="*{description}"
+                              th:classappend="${#fields.hasErrors('description')} ? 'is-invalid' : ''"
+                              rows="3" maxlength="1000" placeholder="Опишите вашу викторину..."></textarea>
+                    <div th:if="${#fields.hasErrors('description')}" class="invalid-feedback" th:errors="*{description}"></div>
+                    <div class="quiz-form-text">От 10 до 1000 символов</div>
+                </div>
+
+                <div class="quiz-grid">
+                    <div class="quiz-form-group">
+                        <label for="categoryId" class="quiz-form-label">
+                            <i class="bi bi-tags"></i>Категория
+                        </label>
+                        <select class="quiz-form-select" id="categoryId" th:field="*{categoryId}">
+                            <option value="">-- Выберите категорию --</option>
+                            <option th:each="category : ${categories}"
+                                    th:value="${category.id}"
+                                    th:text="${category.name}"></option>
+                        </select>
+                    </div>
+
+                    <div class="quiz-form-group">
+                        <label for="maxQuestions" class="quiz-form-label">
+                            <i class="bi bi-question-circle"></i>Количество вопросов *
+                        </label>
+                        <input type="number" class="quiz-form-control" id="maxQuestions"
+                               th:field="*{maxQuestions}" min="10" max="30" value="10" required>
+                        <div class="quiz-form-text">От 10 до 30 вопросов</div>
+                    </div>
+                </div>
+
+                <div class="quiz-grid">
+                    <div class="quiz-form-group">
+                        <label for="timeLimitMinutes" class="quiz-form-label">
+                            <i class="bi bi-clock"></i>Общее время (минуты)
+                        </label>
+                        <input type="number" class="quiz-form-control" id="timeLimitMinutes"
+                               th:field="*{timeLimitMinutes}" min="1" max="180" placeholder="Без ограничения">
+                        <div class="quiz-form-text">Оставьте пустым, если без ограничения времени</div>
+                    </div>
+
+                    <div class="quiz-form-group">
+                        <div class="quiz-form-switch">
+                            <input type="checkbox" id="isPublic" th:field="*{public}">
+                            <label for="isPublic" class="quiz-form-label">
+                                <i class="bi bi-globe"></i>Публичная викторина
+                            </label>
+                        </div>
+                        <div class="quiz-form-text">Если включено, викторина будет видна всем пользователям</div>
+                    </div>
+                </div>
+
+                <div class="quiz-form-group">
+                    <label for="coverImage" class="quiz-form-label">
+                        <i class="bi bi-image"></i>Обложка викторины
+                    </label>
+                    <input type="text" class="quiz-form-control" id="coverImage" th:field="*{headImage}"
+                           placeholder="URL изображения или путь к файлу">
+                    <div class="quiz-form-text">Поддерживаются ссылки на изображения или загрузка файлов</div>
+                    <button type="button" class="btn-quiz btn-quiz-outline btn-quiz-sm mt-2"
+                            onclick="uploadImage('coverImage')">
+                        <i class="bi bi-upload me-1"></i>Загрузить изображение
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Вопросы -->
+        <div class="create-quiz-card fade-in">
+            <div class="create-quiz-card-header">
+                <h5><i class="bi bi-question-square"></i>Вопросы</h5>
+                <div class="questions-count">
+                    Вопросов: <span id="currentQuestionCount">10</span>/30
+                </div>
+            </div>
+            <div class="create-quiz-card-body">
+
+                <div class="quiz-alert">
+                    <i class="bi bi-info-circle"></i>
+                    <div>
+                        <strong>Типы вопросов:</strong>
+                        <ul>
+                            <li><strong>Правда/Ложь</strong> - только два варианта ответа, единственный верный</li>
+                            <li><strong>Один правильный ответ</strong> - выберите один вариант из нескольких</li>
+                            <li><strong>Несколько правильных ответов</strong> - выберите несколько вариантов</li>
+                            <li><strong>Текстовый ответ</strong> - пользователь вводит ответ вручную</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="questions-container-header">
+                    <button type="button" class="btn-quiz btn-quiz-primary" onclick="addQuestion()">
+                        <i class="bi bi-plus-lg me-1"></i>Добавить вопрос
+                    </button>
+                </div>
+
+                <div id="questionsContainer">
+                    <!-- Проверяем, есть ли questions в quizDto -->
+                    <div th:if="${quizDto?.questions != null and !quizDto.questions.isEmpty()}">
+                        <div th:each="question, stat : ${quizDto.questions}">
+                            <div th:replace="~{fragments/question-form :: questionForm(${stat.index}, ${question})}"
+                                 th:with="questionTypes=${questionTypes}"></div>
+                        </div>
+                    </div>
+                    <!-- Если questions нет или пуст, добавляем 10 пустых вопросов по умолчанию -->
+                    <div th:unless="${quizDto?.questions != null and !quizDto.questions.isEmpty()}">
+                        <div th:each="i : ${#numbers.sequence(0, 9)}">
+                            <div th:replace="~{fragments/question-form :: questionForm(${i})}"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Кнопки отправки -->
+        <div class="create-quiz-card">
+            <div class="create-quiz-card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a th:href="@{/users/profile/main(tab='my-quizzes')}" class="btn-quiz btn-quiz-outline">
+                        <i class="bi bi-arrow-left me-1"></i>Вернуться в профиль
+                    </a>
+
+                    <button type="submit" class="btn-quiz btn-quiz-primary">
+                        <i class="bi bi-check-lg me-1"></i>Сохранить изменения
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Скрытый input для загрузки файлов -->
+<input type="file" id="imageUploadInput" style="display: none;" accept="image/*">
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    let questionCount = 10;
+
+    // функция обновления счетчика
+    function updateQuestionCount() {
+        questionCount = document.querySelectorAll('.question-card').length;
+        document.getElementById('currentQuestionCount').textContent = questionCount;
+        document.getElementById('maxQuestions').value = questionCount;
+    }
+
+    // функция добавления вопроса
+    document.getElementById('addQuestionBtn').addEventListener('click', function() {
+        if (questionCount >= 30) {
+            alert('Максимальное количество вопросов: 30');
+            return;
+        }
+
+        fetch('/quizzes/add-question?index=' + questionCount)
+            .then(response => response.text())
+            .then(html => {
+                const container = document.getElementById('questionsContainer');
+                const div = document.createElement('div');
+                div.innerHTML = html;
+                container.appendChild(div);
+
+                updateQuestionIndexes();
+                updateQuestionCount();
+            });
+    });
+
+    // функция удаления вопроса (делегирование событий)
+    document.addEventListener('click', function(event) {
+        // Удаление вопроса
+        if (event.target.closest('.btn-quiz-danger')) {
+            const button = event.target.closest('.btn-quiz-danger');
+            if (questionCount <= 10) {
+                alert('Минимальное количество вопросов: 10');
+                return;
+            }
+
+            const questionDiv = button.closest('.question-card');
+
+            // анимация исчезновения
+            questionDiv.style.transition = 'opacity 0.3s, transform 0.3s';
+            questionDiv.style.opacity = '0';
+            questionDiv.style.transform = 'translateX(-50px)';
+
+            setTimeout(() => {
+                questionDiv.remove();
+                updateQuestionIndexes();
+                updateQuestionCount();
+            }, 300);
+        }
+
+        // Добавление варианта ответа
+        if (event.target.closest('.add-option-btn')) {
+            const button = event.target.closest('.add-option-btn');
+            const questionIndex = button.getAttribute('data-question-index');
+            if (questionIndex !== null) {
+                addOption(parseInt(questionIndex));
+            }
+        }
+    });
+
+    // обработчик изменения поля количества вопросов
+    document.addEventListener('DOMContentLoaded', function() {
+        const maxQuestionsInput = document.getElementById('maxQuestions');
+
+        maxQuestionsInput.addEventListener('change', function() {
+            const targetCount = parseInt(this.value);
+            const currentCount = questionCount;
+
+            if (targetCount < 10 || targetCount > 30) {
+                alert('Количество вопросов должно быть от 10 до 30');
+                this.value = currentCount;
+                return;
+            }
+
+            if (targetCount > currentCount) {
+                // Добавляем недостающие вопросы
+                for (let i = currentCount; i < targetCount; i++) {
+                    setTimeout(() => {
+                        document.getElementById('addQuestionBtn').click();
+                    }, 100 * (i - currentCount));
+                }
+            } else if (targetCount < currentCount) {
+                // Удаляем лишние вопросы
+                const questions = document.querySelectorAll('.question-card');
+                for (let i = currentCount - 1; i >= targetCount; i--) {
+                    questions[i].remove();
+                }
+                updateQuestionIndexes();
+                updateQuestionCount();
+            }
+        });
+
+        // Инициализация типов вопросов для всех существующих вопросов
+        document.querySelectorAll('.question-type-select').forEach(select => {
+            select.addEventListener('change', function() {
+                changeQuestionType(this);
+            });
+            // Инициализация текущего состояния
+            changeQuestionType(select);
+        });
+
+        // Проверка выбранных ответов
+        document.querySelectorAll('.question-card').forEach((questionDiv, index) => {
+            const optionsContainer = document.getElementById(`options-list-${index}`);
+            if (optionsContainer) {
+                const checkedInputs = optionsContainer.querySelectorAll('input:checked');
+                if (checkedInputs.length === 0) {
+                    // Если ни один ответ не выбран, выбираем первый
+                    const firstInput = optionsContainer.querySelector('input[type="radio"], input[type="checkbox"]');
+                    if (firstInput) {
+                        firstInput.checked = true;
+                    }
+                }
+            }
+        });
+
+        updateQuestionCount();
+    });
+
+    // Обработчик изменения типа вопроса
+    function changeQuestionType(select) {
+        const index = select.getAttribute('data-index');
+        const type = select.value;
+        const optionsContainer = document.getElementById('options-container-' + index);
+        const textAnswerContainer = document.getElementById('text-answer-container-' + index);
+        const optionsHint = document.getElementById('options-hint-' + index);
+        const addOptionBtn = optionsContainer ? optionsContainer.querySelector('.add-option-btn') : null;
+
+        if (type === 'TEXT_INPUT') {
+            if (optionsContainer) {
+                optionsContainer.style.display = 'none';
+                // Делаем поля необязательными для TEXT_INPUT
+                optionsContainer.querySelectorAll('[required]').forEach(input => {
+                    input.removeAttribute('required');
+                });
+                // Очищаем correctAnswers для TEXT_INPUT
+                optionsContainer.querySelectorAll('input[name*="correctAnswers"]').forEach(input => {
+                    input.disabled = true;
+                });
+            }
+
+            if (textAnswerContainer) {
+                textAnswerContainer.style.display = 'block';
+                // Делаем текстовое поле обязательным
+                const textAnswerInput = textAnswerContainer.querySelector('input[name*="correctTextAnswer"]');
+                if (textAnswerInput) {
+                    textAnswerInput.setAttribute('required', 'required');
+                }
+            }
+        } else {
+            if (optionsContainer) {
+                optionsContainer.style.display = 'block';
+                // Восстанавливаем обязательность полей
+                optionsContainer.querySelectorAll('.option-text').forEach(input => {
+                    input.setAttribute('required', 'required');
+                });
+                // Восстанавливаем correctAnswers
+                optionsContainer.querySelectorAll('input[name*="correctAnswers"]').forEach(input => {
+                    input.disabled = false;
+                });
+            }
+
+            if (textAnswerContainer) {
+                textAnswerContainer.style.display = 'none';
+                // Убираем обязательность с текстового ответа
+                const textAnswerInput = textAnswerContainer.querySelector('input[name*="correctTextAnswer"]');
+                if (textAnswerInput) {
+                    textAnswerInput.removeAttribute('required');
+                }
+            }
+
+            // Обновляем подсказку и тип выбора
+            if (optionsHint) {
+                switch (type) {
+                    case 'SINGLE_CHOICE':
+                        optionsHint.textContent = 'Выберите один правильный ответ (отметьте кружком)';
+                        updateInputsToRadio(index);
+                        resetOptionsForNonTrueFalse(index, addOptionBtn);
+                        break;
+                    case 'MULTIPLE_CHOICE':
+                        optionsHint.textContent = 'Выберите один или несколько правильных ответов (отметьте галочкой)';
+                        updateInputsToCheckbox(index);
+                        resetOptionsForNonTrueFalse(index, addOptionBtn);
+                        break;
+                    case 'TRUE_FALSE':
+                        optionsHint.textContent = 'Выберите один правильный ответ (отметьте кружком)';
+                        updateInputsToRadio(index);
+                        setTrueFalseOptions(index, addOptionBtn);
+                        break;
+                }
+            }
+        }
+    }
+
+    // Обновление на радио-кнопки для одного выбора
+    function updateInputsToRadio(index) {
+        const container = document.getElementById('options-list-' + index);
+        if (!container) return;
+
+        container.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+            input.type = 'radio';
+            input.name = `questions[${index}].correctAnswers`;
+        });
+    }
+
+    // Обновление на чекбоксы для множественного выбора
+    function updateInputsToCheckbox(index) {
+        const container = document.getElementById('options-list-' + index);
+        if (!container) return;
+
+        container.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(input => {
+            input.type = 'checkbox';
+            input.name = `questions[${index}].correctAnswers`;
+        });
+    }
+
+    function resetOptionsForNonTrueFalse(index, addOptionBtn) {
+        const container = document.getElementById('options-list-' + index);
+        if (!container) return;
+
+        // Показываем кнопку добавления
+        if (addOptionBtn) {
+            addOptionBtn.style.display = 'block';
+        }
+
+        // Восстанавливаем возможность добавлять варианты
+        const optionRows = container.querySelectorAll('.option-row');
+        if (optionRows.length < 2) {
+            // Добавляем недостающие варианты если их меньше 2
+            for (let i = optionRows.length; i < 2; i++) {
+                addOption(index);
+            }
+        } else {
+            // Убедимся, что у первого варианта есть checked атрибут
+            const firstRadio = container.querySelector('input[type="radio"], input[type="checkbox"]');
+            if (firstRadio && !container.querySelector('input:checked')) {
+                firstRadio.checked = true;
+            }
+        }
+    }
+
+    function setTrueFalseOptions(index, addOptionBtn) {
+        const container = document.getElementById('options-list-' + index);
+        if (!container) return;
+
+        // Удаляем все существующие варианты
+        container.querySelectorAll('.option-row').forEach(option => option.remove());
+
+        // Добавляем фиксированные варианты для TRUE_FALSE
+        const trueFalseOptions = ['Правда', 'Ложь'];
+
+        trueFalseOptions.forEach((optionText, i) => {
+            const newOptionHtml = `
+        <div class="option-row d-flex align-items-center gap-2">
+            <div class="option-checkbox">
+                <input type="radio"
+                       id="option-correct-${index}-${i}"
+                       name="questions[${index}].correctAnswers"
+                       value="${i}"
+                       ${i === 0 ? 'checked' : ''}>
+            </div>
+            <input type="text" class="quiz-form-control option-text"
+                   id="option-text-${index}-${i}"
+                   name="questions[${index}].options"
+                   value="${optionText}"
+                   readonly
+                   style="background-color: #f8f9fa; cursor: not-allowed;">
+            <input type="hidden" name="questions[${index}].optionImages" value="">
+        </div>
+    `;
+            container.insertAdjacentHTML('beforeend', newOptionHtml);
+        });
+
+        // Скрываем кнопку добавления варианта
+        if (addOptionBtn) {
+            addOptionBtn.style.display = 'none';
+        }
+    }
+
+    function addOption(questionIndex) {
+        if (questionIndex === null || questionIndex === undefined) {
+            console.error('Не удалось определить индекс вопроса');
+            return;
+        }
+
+        questionIndex = parseInt(questionIndex);
+
+        const container = document.getElementById('options-list-' + questionIndex);
+        if (!container) {
+            console.error('Контейнер options-list-' + questionIndex + ' не найден');
+            return;
+        }
+
+        const questionType = document.getElementById(`question-type-${questionIndex}`)?.value || 'SINGLE_CHOICE';
+
+        // Для TRUE_FALSE нельзя добавлять больше 2 вариантов
+        if (questionType === 'TRUE_FALSE') {
+            alert('Для типа "Правда/Ложь" можно использовать только 2 варианта ответа');
+            return;
+        }
+
+        const optionCount = container.querySelectorAll('.option-row').length;
+
+        if (optionCount >= 10) {
+            alert('Максимальное количество вариантов: 10');
+            return;
+        }
+
+        // Определяем тип input в зависимости от типа вопроса
+        let inputType = 'radio'; // по умолчанию
+        let inputName = `questions[${questionIndex}].correctAnswers`;
+
+        if (questionType === 'MULTIPLE_CHOICE') {
+            inputType = 'checkbox';
+        }
+
+        const newOptionHtml = `
+    <div class="option-row d-flex align-items-center gap-2">
+        <div class="option-checkbox">
+            <input type="${inputType}"
+                   id="option-correct-${questionIndex}-${optionCount}"
+                   name="${inputName}"
+                   value="${optionCount}">
+        </div>
+        <input type="text" class="quiz-form-control option-text"
+               id="option-text-${questionIndex}-${optionCount}"
+               name="questions[${questionIndex}].options"
+               placeholder="Вариант ${optionCount + 1}"
+               required>
+        <input type="hidden" name="questions[${questionIndex}].optionImages" value="">
+    </div>
+`;
+
+        container.insertAdjacentHTML('beforeend', newOptionHtml);
+    }
+
+    function updateQuestionIndexes() {
+        const questions = document.querySelectorAll('.question-card');
+        questions.forEach((div, index) => {
+            // Обновляем атрибут data-index
+            div.setAttribute('data-index', index);
+            div.id = `question-${index}`;
+
+            // Обновляем порядковый номер
+            const numberElement = div.querySelector('.question-number');
+            if (numberElement) {
+                numberElement.textContent = 'Вопрос ' + (index + 1);
+            }
+
+            // Обновляем атрибут data-question-index у кнопки добавления варианта
+            const addOptionBtn = div.querySelector('.add-option-btn');
+            if (addOptionBtn) {
+                addOptionBtn.setAttribute('data-question-index', index);
+            }
+
+            // обновление имен полей
+            const inputs = div.querySelectorAll('[name^="questions["]');
+            inputs.forEach(input => {
+                const name = input.getAttribute('name');
+                const newName = name.replace(/questions\[\d+\]/, 'questions[' + index + ']');
+                input.setAttribute('name', newName);
+                input.setAttribute('id', newName.replace(/\./g, '-'));
+            });
+
+            // Обновляем ID контейнеров
+            const optionsContainer = div.querySelector(`[id^="options-container-"]`);
+            if (optionsContainer) optionsContainer.id = `options-container-${index}`;
+
+            const optionsList = div.querySelector(`[id^="options-list-"]`);
+            if (optionsList) optionsList.id = `options-list-${index}`;
+
+            const optionsHint = div.querySelector(`[id^="options-hint-"]`);
+            if (optionsHint) optionsHint.id = `options-hint-${index}`;
+
+            const textAnswerContainer = div.querySelector(`[id^="text-answer-container-"]`);
+            if (textAnswerContainer) textAnswerContainer.id = `text-answer-container-${index}`;
+
+            // Обновляем атрибут data-index у селекта типа
+            const typeSelect = div.querySelector('.question-type-select');
+            if (typeSelect) typeSelect.setAttribute('data-index', index);
+        });
+    }
+
+    document.getElementById('quizForm').addEventListener('submit', function(event) {
+        let isValid = true;
+        const errorMessages = [];
+
+        const questions = document.querySelectorAll('.question-card');
+
+        questions.forEach((questionDiv, index) => {
+            const type = document.getElementById(`question-type-${index}`)?.value;
+
+            if (type === 'TEXT_INPUT') {
+                // Проверка текстового ответа
+                const textAnswer = document.getElementById(`question-text-answer-${index}`);
+                if (!textAnswer || textAnswer.value.trim() === '') {
+                    isValid = false;
+                    errorMessages.push(`Вопрос ${index + 1}: для текстового вопроса необходимо указать правильный ответ`);
+                }
+            } else if (type === 'SINGLE_CHOICE' || type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE') {
+                // Проверка выбора правильного ответа
+                const container = document.getElementById(`options-list-${index}`);
+                if (container) {
+                    const checkedInputs = container.querySelectorAll('input[type="radio"]:checked, input[type="checkbox"]:checked');
+
+                    if (checkedInputs.length === 0) {
+                        isValid = false;
+                        errorMessages.push(`Вопрос ${index + 1}: необходимо выбрать хотя бы один правильный ответ`);
+                    }
+
+                    if (type === 'SINGLE_CHOICE' && checkedInputs.length > 1) {
+                        isValid = false;
+                        errorMessages.push(`Вопрос ${index + 1}: для одиночного выбора можно выбрать только один ответ`);
+                    }
+                }
+            }
+        });
+
+        if (!isValid) {
+            event.preventDefault();
+
+            // Показать ошибки пользователю
+            let errorHtml = '<h5><i class="bi bi-exclamation-triangle"></i> Ошибки в вопросах:</h5><ul>';
+            errorMessages.forEach(msg => {
+                errorHtml += `<li>${msg}</li>`;
+            });
+            errorHtml += '</ul>';
+
+            // Создать или обновить блок с ошибками
+            let errorDiv = document.querySelector('.validation-errors');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger validation-errors';
+                const form = document.getElementById('quizForm');
+                form.insertBefore(errorDiv, form.firstChild);
+            }
+            errorDiv.innerHTML = errorHtml;
+
+            // Прокрутить к ошибкам
+            errorDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+
+    function uploadImage(targetFieldId) {
+        const input = document.getElementById('imageUploadInput');
+        input.onchange = function() {
+            const file = input.files[0];
+            if (file) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                fetch('/quizzes/upload-image', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            document.getElementById(targetFieldId).value = data.path;
+                            alert('Изображение успешно загружено!');
+                        } else {
+                            alert('Ошибка загрузки: ' + data.error);
+                        }
+                    });
+            }
+        };
+        input.click();
+    }
+
+</script>
+</body>
+</html>

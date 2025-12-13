@@ -580,20 +580,118 @@ h1, h2, h3, h4, h5, h6 {
 .categories-section {
     padding: 100px 0;
     background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    position: relative;
+    overflow: visible !important;
 }
 
+/* Контейнер для контента */
+.categories-section .container {
+    position: relative;
+    z-index: 2;
+}
+
+/* Исправленный контейнер карусели */
+#categoriesCarousel {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Контейнер слайдов */
+.carousel-inner {
+    overflow: hidden;
+    border-radius: var(--border-radius-md);
+}
+
+/* стрелки карусели */
+#categoriesCarousel .carousel-control-prev,
+#categoriesCarousel .carousel-control-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--gray-light);
+    z-index: 1000;
+    opacity: 1;
+    transition: all 0.2s ease;
+}
+
+#categoriesCarousel .carousel-control-prev {
+    left: -50px;
+}
+
+#categoriesCarousel .carousel-control-next {
+    right: -50px;
+}
+
+/* Стили для иконок стрелок - более тонкие */
+#categoriesCarousel .carousel-control-prev-icon,
+#categoriesCarousel .carousel-control-next-icon {
+    background-size: 60%;
+    width: 20px;
+    height: 20px;
+    filter: invert(40%) sepia(20%) saturate(2000%) hue-rotate(230deg);
+}
+
+/* Простой ховер-эффект для стрелок */
+#categoriesCarousel .carousel-control-prev:hover,
+#categoriesCarousel .carousel-control-next:hover {
+    background: white;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-50%) scale(1.05);
+}
+
+#categoriesCarousel .carousel-control-prev:hover .carousel-control-prev-icon,
+#categoriesCarousel .carousel-control-next:hover .carousel-control-next-icon {
+    filter: invert(25%) sepia(90%) saturate(3000%) hue-rotate(250deg);
+}
+
+/* Исправленные стили для карточек в карусели */
+#categoriesCarousel .category-card {
+    margin: 10px 15px;
+    height: 280px;
+    min-height: 280px;
+    aspect-ratio: 1/1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Стили для карточек без карусели */
+.categories-section .row .category-card {
+    height: 280px;
+    min-height: 280px;
+    aspect-ratio: 1/1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    margin: 15px 0;
+}
+
+/* Основные стили карточек (оставляем все как было) */
 .category-card {
     background: white;
     border-radius: var(--border-radius-md);
     padding: 2rem;
     text-align: center;
-    transition: var(--transition);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: block;
     text-decoration: none;
     color: inherit;
     position: relative;
     overflow: hidden;
     border: 1px solid var(--gray-light);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .category-card::before {
@@ -605,17 +703,24 @@ h1, h2, h3, h4, h5, h6 {
     height: 100%;
     background: var(--gradient-primary);
     opacity: 0;
-    transition: var(--transition);
-    z-index: 0;
+    transition: opacity 0.3s ease;
+    z-index: -1;
 }
 
 .category-card:hover::before {
     opacity: 0.05;
 }
 
+/* Улучшенный hover-эффект с правильной тенью */
 .category-card:hover {
-    transform: translateY(-10px);
-    box-shadow: var(--box-shadow);
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(109, 40, 217, 0.15),
+    0 10px 20px rgba(109, 40, 217, 0.1);
+    z-index: 10;
+}
+
+.category-hover {
+    display: none !important;
 }
 
 .category-icon {
@@ -630,8 +735,14 @@ h1, h2, h3, h4, h5, h6 {
     color: white;
     position: relative;
     z-index: 1;
+    transition: transform 0.3s ease;
 }
 
+.category-card:hover .category-icon {
+    transform: scale(1.1);
+}
+
+/* Цвета категорий */
 .category-tech {
     background: linear-gradient(135deg, #6366f1, #8b5cf6);
 }
@@ -662,21 +773,7 @@ h1, h2, h3, h4, h5, h6 {
     z-index: 1;
 }
 
-.category-hover {
-    position: absolute;
-    top: 50%;
-    right: 2rem;
-    transform: translateY(-50%);
-    opacity: 0;
-    transition: var(--transition);
-    color: var(--primary);
-    font-size: 1.2rem;
-}
 
-.category-card:hover .category-hover {
-    opacity: 1;
-    right: 1.5rem;
-}
 
 /* ===== HOW IT WORKS ===== */
 .how-it-works-section {
@@ -913,82 +1010,4 @@ h1, h2, h3, h4, h5, h6 {
 @keyframes glow {
     0% { box-shadow: 0 0 20px rgba(109, 40, 217, 0.5); }
     100% { box-shadow: 0 0 40px rgba(109, 40, 217, 0.8); }
-}
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 992px) {
-    .hero-title {
-        font-size: 3rem;
-    }
-
-    .section-title {
-        font-size: 2.2rem;
-    }
-
-    .steps-container::before {
-        display: none;
-    }
-
-    .step {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-}
-
-@media (max-width: 768px) {
-    body {
-        padding-top: 70px;
-    }
-
-    .hero-title {
-        font-size: 2.5rem;
-    }
-
-    .hero-subtitle {
-        font-size: 1.1rem;
-    }
-
-    .hero-stats {
-        flex-direction: column;
-        gap: 1.5rem;
-    }
-
-    .section-title {
-        font-size: 2rem;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 576px) {
-    .hero-section {
-        padding: 140px 0 60px;
-    }
-
-    .hero-title {
-        font-size: 2rem;
-    }
-
-    .section-title {
-        font-size: 1.8rem;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .cta-card {
-        padding: 2rem;
-    }
-
-    .footer {
-        text-align: center;
-    }
-
-    .footer-social {
-        justify-content: center;
-    }
 }
