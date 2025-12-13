@@ -35,4 +35,15 @@ public class Category {
         this.description = description;
     }
 
+    // Дополнительные методы
+    public boolean hasPublicQuizzes() {
+        return quizzes != null && !quizzes.isEmpty() &&
+                quizzes.stream().anyMatch(Quiz::isPublic);
+    }
+
+    public long countPublicQuizzes() {
+        if (quizzes == null) return 0;
+        return quizzes.stream().filter(Quiz::isPublic).count();
+    }
+
 }

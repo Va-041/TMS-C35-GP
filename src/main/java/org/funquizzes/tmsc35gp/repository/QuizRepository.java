@@ -20,6 +20,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     Page<Quiz> findByCategoryAndIsPublicTrue(Category category, Pageable pageable);
     Page<Quiz> findByDifficultyLevelAndIsPublicTrue(DifficultyLevel difficultyLevel, Pageable pageable);
 
+
     // поиск викторин со статусом Публичная
     @Query("SELECT q FROM Quiz q WHERE q.isPublic = true AND " +
             "(:search IS NULL OR LOWER(q.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
@@ -34,4 +35,36 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     @Query("SELECT q FROM Quiz q WHERE q.isPublic = true ORDER BY q.averageRating DESC")
     Page<Quiz> findTopRatedQuizzes(Pageable pageable);
 
+    @Query("SELECT q FROM Quiz q WHERE q.isPublic = true AND " +
+            "(:search IS NULL OR LOWER(q.title) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(q.description) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "(:categoryIds IS NULL OR q.category.id IN :categoryIds) AND " +
+            "(:difficultyLevels IS NULL OR q.difficultyLevel IN :difficultyLevels)")
+    Page<Quiz> findPublicQuizzesWithFilters(
+            @Param("search") String search,
+            @Param("categoryIds") List<Long> categoryIds,
+            @Param("difficultyLevels") List<DifficultyLevel> difficultyLevels,
+            Pageable pageable);
+
+    @Query("SELECT q FROM Quiz q WHERE q.isPublic = true AND " +
+            "(:categories IS NULL OR q.category.id IN :categories)")
+    Page<Quiz> findPublicQuizzesByCategories(@Param("categories") List<Long> categoryIds, Pageable pageable);
+
+    @Query("SELECT q FROM Quiz q WHERE q.isPublic = true AND " +
+            "(:categories IS NULL OR q.category.id IN :categories) AND " +
+            "(:difficulties IS NULL OR q.difficultyLevel IN :difficulties)")
+    Page<Quiz> findPublicQuizzesWithFilters(
+            @Param("categories") List<Long> categoryIds,
+            @Param("difficulties") List<DifficultyLevel> difficulties,
+            Pageable pageable);
+
+    // Новые методы для проверки существования викторин
+    @Query("SELECT COUNT(q) > 0 FROM Quiz q WHERE q.category.id = :categoryId AND q.isPublic = true")
+    boolean existsByCategoryIdAndPublicTrue(@Param("categoryId") Long categoryId);
+
+    @Query("SELECT COUNT(q) FROM Quiz q WHERE q.category.id = :categoryId AND q.isPublic = true")
+    long countByCategoryIdAndPublicTrue(@Param("categoryId") Long categoryId);
+
+    @Query("SELECT COUNT(q) > 0 FROM Quiz q WHERE q.category.id IN :categoryIds AND q.isPublic = true")
+    boolean existsByCategoryIdsAndPublicTrue(@Param("categoryIds") List<Long> categoryIds);
 }

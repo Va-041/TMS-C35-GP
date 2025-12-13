@@ -9,6 +9,7 @@ import org.funquizzes.tmsc35gp.service.CategoryService;
 import org.funquizzes.tmsc35gp.service.QuizService;
 import org.funquizzes.tmsc35gp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -19,8 +20,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Controller
@@ -48,10 +48,10 @@ public class QuizController {
             question.setPoints(100);
             question.setTimeLimitSeconds(30);
 
-            // 2 ПУСТЫХ варианта ответа по умолчанию
+            // 2 пустых варианта ответа по умолчанию
             List<String> options = new ArrayList<>();
-            options.add("");  // ПУСТАЯ строка вместо "Вариант 1"
-            options.add("");  // ПУСТАЯ строка вместо "Вариант 2"
+            options.add("");
+            options.add("");
             question.setOptions(options);
 
             // Пустые изображения
@@ -306,16 +306,346 @@ public class QuizController {
         }
     }
 
-    @GetMapping("/my")
-    public String myQuizzes(Model model, Authentication authentication) {
 
-        User user = (User) userService.loadUserByUsername(authentication.getName());
-        List<Quiz> quizzes = quizService.findByCreator(user);
-        model.addAttribute("quizzes", quizzes);
 
-        return "quizzes/my";
+    @GetMapping("")
+    public String getAllQuizzes(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String categories,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Integer minRating,
+            @RequestParam(required = false, defaultValue = "popular") String sort,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "12") int size,
+            @RequestParam(required = false, defaultValue = "false") boolean ajax,
+            Model model) {
+
+        try {
+            Pageable pageable = PageRequest.of(page, size, getSort(sort));
+            Page<Quiz> quizzesPage;
+
+            // Parse filter parameters - делаем их финальными
+            final List<Long> selectedCategoryIds = new ArrayList<>();
+            if (categories != null && !categories.isEmpty()) {
+                selectedCategoryIds.addAll(Arrays.stream(categories.split(","))
+                        .map(Long::parseLong)
+                        .collect(Collectors.toList()));
+            }
+
+            final List<DifficultyLevel> selectedDifficultyLevels = new ArrayList<>();
+            if (difficulty != null && !difficulty.isEmpty()) {
+                try {
+                    selectedDifficultyLevels.addAll(Arrays.stream(difficulty.split(","))
+                            .map(d -> DifficultyLevel.valueOf(d.toUpperCase()))
+                            .collect(Collectors.toList()));
+                } catch (IllegalArgumentException e) {
+                    // Invalid difficulty value, ignore
+                    System.err.println("Invalid difficulty value: " + difficulty);
+                }
+            }
+
+            boolean hasCategoryFilter = !selectedCategoryIds.isEmpty();
+            boolean hasDifficultyFilter = !selectedDifficultyLevels.isEmpty();
+            boolean hasSearchFilter = search != null && !search.trim().isEmpty();
+
+            // Если выбрана категория, но нет викторин - показываем сообщение
+            if (hasCategoryFilter && selectedCategoryIds.size() == 1) {
+                Category category = categoryService.getCategoryById(selectedCategoryIds.get(0));
+                model.addAttribute("selectedCategory", category);
+
+                // Проверяем, есть ли публичные викторины в этой категории
+                boolean hasQuizzesInCategory = quizService.existsByCategoryIdAndPublicTrue(selectedCategoryIds.get(0));
+                model.addAttribute("hasQuizzesInCategory", hasQuizzesInCategory);
+
+                // Если нет викторин и это единственный фильтр, показываем сообщение
+                if (!hasQuizzesInCategory && !hasDifficultyFilter && !hasSearchFilter) {
+                    model.addAttribute("noResultsMessage", "В категории \"" + category.getName() + "\" викторин пока нет");
+
+                    // Возвращаем пустую страницу
+                    quizzesPage = new PageImpl<>(Collections.emptyList(), pageable, 0);
+
+                    // Подготавливаем атрибуты модели
+                    prepareModelAttributes(model, quizzesPage, search, selectedCategoryIds,
+                            selectedDifficultyLevels, difficulty, minRating, sort);
+
+                    if (ajax) {
+                        return "fragments/quizzes-list :: quizzesList";
+                    }
+                    return "quizzes/quizzes";
+                }
+            }
+
+            // Apply search filter if present
+            if (search != null && !search.trim().isEmpty()) {
+                // Если есть поисковый запрос, используем searchPublicQuizzes
+                quizzesPage = quizService.searchPublicQuizzes(search, pageable);
+
+                // Затем применяем другие фильтры вручную
+                if (!selectedCategoryIds.isEmpty() || !selectedDifficultyLevels.isEmpty()) {
+                    List<Quiz> filteredQuizzes = quizzesPage.getContent().stream()
+                            .filter(quiz -> {
+                                // Apply category filter if selected
+                                if (!selectedCategoryIds.isEmpty()) {
+                                    if (quiz.getCategory() == null) return false;
+                                    return selectedCategoryIds.contains(quiz.getCategory().getId());
+                                }
+                                return true;
+                            })
+                            .filter(quiz -> {
+                                // Apply difficulty filter if selected
+                                if (!selectedDifficultyLevels.isEmpty()) {
+                                    return selectedDifficultyLevels.contains(quiz.getDifficultyLevel());
+                                }
+                                return true;
+                            })
+                            .collect(Collectors.toList());
+
+                    // Create a custom page
+                    int start = (int) pageable.getOffset();
+                    int end = Math.min((start + pageable.getPageSize()), filteredQuizzes.size());
+
+                    if (start >= filteredQuizzes.size()) {
+                        quizzesPage = new PageImpl<>(
+                                Collections.emptyList(),
+                                pageable,
+                                filteredQuizzes.size()
+                        );
+                    } else {
+                        quizzesPage = new PageImpl<>(
+                                filteredQuizzes.subList(start, Math.min(end, filteredQuizzes.size())),
+                                pageable,
+                                filteredQuizzes.size()
+                        );
+                    }
+                }
+            } else if (!selectedCategoryIds.isEmpty() || !selectedDifficultyLevels.isEmpty()) {
+                // Если есть фильтры категорий или сложности (но нет поиска)
+                // Более эффективный подход - использовать существующие методы по очереди
+
+                if (!selectedCategoryIds.isEmpty() && !selectedDifficultyLevels.isEmpty()) {
+                    // И категории, и сложности - нужно фильтровать вручную
+                    Page<Quiz> publicQuizzes = quizService.findPublicQuizzes(
+                            PageRequest.of(0, 1000, getSort(sort))); // Большая страница для фильтрации
+
+                    List<Quiz> filteredQuizzes = publicQuizzes.getContent().stream()
+                            .filter(quiz -> {
+                                if (!selectedCategoryIds.isEmpty()) {
+                                    if (quiz.getCategory() == null) return false;
+                                    return selectedCategoryIds.contains(quiz.getCategory().getId());
+                                }
+                                return true;
+                            })
+                            .filter(quiz -> {
+                                if (!selectedDifficultyLevels.isEmpty()) {
+                                    return selectedDifficultyLevels.contains(quiz.getDifficultyLevel());
+                                }
+                                return true;
+                            })
+                            .collect(Collectors.toList());
+
+                    // Применяем пагинацию
+                    int start = (int) pageable.getOffset();
+                    int end = Math.min((start + pageable.getPageSize()), filteredQuizzes.size());
+
+                    if (start >= filteredQuizzes.size()) {
+                        quizzesPage = new PageImpl<>(
+                                Collections.emptyList(),
+                                pageable,
+                                filteredQuizzes.size()
+                        );
+                    } else {
+                        quizzesPage = new PageImpl<>(
+                                filteredQuizzes.subList(start, Math.min(end, filteredQuizzes.size())),
+                                pageable,
+                                filteredQuizzes.size()
+                        );
+                    }
+                } else if (!selectedCategoryIds.isEmpty()) {
+                    // Только категории
+                    if (selectedCategoryIds.size() == 1) {
+                        // Одна категория
+                        quizzesPage = quizService.findPublicQuizzesByCategory(
+                                selectedCategoryIds.get(0), pageable);
+                    } else {
+                        // Несколько категорий - используем специальный метод
+                        quizzesPage = quizService.findPublicQuizzesByCategories(selectedCategoryIds, pageable);
+                    }
+                } else {
+                    // Только сложности
+                    if (selectedDifficultyLevels.size() == 1) {
+                        // Один уровень сложности
+                        quizzesPage = quizService.findPublicQuizzesByDifficulty(
+                                selectedDifficultyLevels.get(0), pageable);
+                    } else {
+                        // Несколько уровней сложности - фильтруем вручную
+                        Page<Quiz> publicQuizzes = quizService.findPublicQuizzes(
+                                PageRequest.of(0, 1000, getSort(sort)));
+
+                        List<Quiz> filteredQuizzes = publicQuizzes.getContent().stream()
+                                .filter(quiz -> selectedDifficultyLevels.contains(quiz.getDifficultyLevel()))
+                                .collect(Collectors.toList());
+
+                        int start = (int) pageable.getOffset();
+                        int end = Math.min((start + pageable.getPageSize()), filteredQuizzes.size());
+
+                        if (start >= filteredQuizzes.size()) {
+                            quizzesPage = new PageImpl<>(
+                                    Collections.emptyList(),
+                                    pageable,
+                                    filteredQuizzes.size()
+                            );
+                        } else {
+                            quizzesPage = new PageImpl<>(
+                                    filteredQuizzes.subList(start, Math.min(end, filteredQuizzes.size())),
+                                    pageable,
+                                    filteredQuizzes.size()
+                            );
+                        }
+                    }
+                }
+            } else {
+                // Нет фильтров, только сортировка
+                switch (sort) {
+                    case "rating":
+                        quizzesPage = quizService.findTopRatedQuizzes(pageable);
+                        break;
+                    case "newest":
+                        quizzesPage = quizService.findPublicQuizzes(pageable);
+                        if (quizzesPage.hasContent()) {
+                            quizzesPage = new PageImpl<>(
+                                    quizzesPage.getContent().stream()
+                                            .sorted((q1, q2) -> {
+                                                if (q1.getCreatedAt() == null && q2.getCreatedAt() == null) return 0;
+                                                if (q1.getCreatedAt() == null) return 1;
+                                                if (q2.getCreatedAt() == null) return -1;
+                                                return q2.getCreatedAt().compareTo(q1.getCreatedAt());
+                                            })
+                                            .collect(Collectors.toList()),
+                                    pageable,
+                                    quizzesPage.getTotalElements()
+                            );
+                        }
+                        break;
+                    case "oldest":
+                        quizzesPage = quizService.findPublicQuizzes(pageable);
+                        if (quizzesPage.hasContent()) {
+                            quizzesPage = new PageImpl<>(
+                                    quizzesPage.getContent().stream()
+                                            .sorted(Comparator.comparing(Quiz::getCreatedAt,
+                                                    Comparator.nullsLast(Comparator.naturalOrder())))
+                                            .collect(Collectors.toList()),
+                                    pageable,
+                                    quizzesPage.getTotalElements()
+                            );
+                        }
+                        break;
+                    case "popular":
+                    default:
+                        quizzesPage = quizService.findPopularQuizzes(pageable);
+                        break;
+                }
+            }
+
+            // Если есть фильтры, но нет результатов - показываем сообщение
+            if (quizzesPage != null && !quizzesPage.hasContent() &&
+                    (hasCategoryFilter || hasDifficultyFilter || hasSearchFilter)) {
+                String message = "";
+                if (hasCategoryFilter && hasDifficultyFilter && hasSearchFilter) {
+                    message = "По вашему запросу в выбранной категории и с выбранным уровнем сложности викторин не найдено";
+                } else if (hasCategoryFilter && hasDifficultyFilter) {
+                    message = "В выбранной категории и с выбранным уровнем сложности викторин не найдено";
+                } else if (hasCategoryFilter && hasSearchFilter) {
+                    message = "По вашему запросу в выбранной категории викторин не найдено";
+                } else if (hasDifficultyFilter && hasSearchFilter) {
+                    message = "По вашему запросу с выбранным уровнем сложности викторин не найдено";
+                } else if (hasCategoryFilter) {
+                    if (selectedCategoryIds.size() == 1) {
+                        Category category = categoryService.getCategoryById(selectedCategoryIds.get(0));
+                        message = "В категории \"" + category.getName() + "\" викторин пока нет";
+                    } else {
+                        message = "В выбранных категориях викторин пока нет";
+                    }
+                } else if (hasDifficultyFilter) {
+                    message = "Викторин с выбранным уровнем сложности не найдено";
+                } else if (hasSearchFilter) {
+                    message = "По вашему запросу ничего не найдено";
+                }
+
+                model.addAttribute("noResultsMessage", message);
+            }
+
+            // Подготавливаем атрибуты модели
+            prepareModelAttributes(model, quizzesPage, search, selectedCategoryIds,
+                    selectedDifficultyLevels, difficulty, minRating, sort);
+
+            if (ajax) {
+                return "fragments/quizzes-list :: quizzesList";
+            }
+
+            return "quizzes/quizzes";
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            model.addAttribute("error", "Ошибка при загрузке викторин: " + e.getMessage());
+            return "quizzes/quizzes";
+        }
     }
 
+    private void prepareModelAttributes(Model model, Page<Quiz> quizzesPage, String search,
+                                        List<Long> selectedCategoryIds, List<DifficultyLevel> selectedDifficultyLevels,
+                                        String difficulty, Integer minRating, String sort) {
+        // Get all categories for filter
+        List<Category> allCategories = categoryService.getAllActiveCategories();
+
+        // Prepare model attributes
+        model.addAttribute("quizzes", quizzesPage.getContent());
+        model.addAttribute("page", quizzesPage);
+        model.addAttribute("totalElements", quizzesPage.getTotalElements());
+        model.addAttribute("search", search);
+        model.addAttribute("selectedCategories", selectedCategoryIds);
+
+        List<String> selectedDifficulties = new ArrayList<>();
+        if (difficulty != null && !difficulty.isEmpty()) {
+            selectedDifficulties = Arrays.asList(difficulty.split(","));
+        }
+        model.addAttribute("selectedDifficulties", selectedDifficulties);
+
+        model.addAttribute("minRating", minRating);
+        model.addAttribute("sortBy", sort);
+        model.addAttribute("sortLabel", getSortLabel(sort));
+        model.addAttribute("categories", allCategories);
+        model.addAttribute("view", "grid");
+    }
+
+    private Sort getSort(String sortBy) {
+        switch (sortBy) {
+            case "rating":
+                return Sort.by(Sort.Direction.DESC, "averageRating");
+            case "newest":
+                return Sort.by(Sort.Direction.DESC, "createdAt");
+            case "oldest":
+                return Sort.by(Sort.Direction.ASC, "createdAt");
+            case "title_asc":
+                return Sort.by(Sort.Direction.ASC, "title");
+            case "title_desc":
+                return Sort.by(Sort.Direction.DESC, "title");
+            case "popular":
+            default:
+                return Sort.by(Sort.Direction.DESC, "playsCount");
+        }
+    }
+
+    private String getSortLabel(String sortBy) {
+        switch (sortBy) {
+            case "rating": return "По рейтингу";
+            case "newest": return "Сначала новые";
+            case "oldest": return "Сначала старые";
+            case "title_asc": return "По названию (А-Я)";
+            case "title_desc": return "По названию (Я-А)";
+            case "popular":
+            default: return "По популярности";
+        }
+    }
 
 
 

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все викторины | FunQuizzes</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+    <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
+</head>
+<body>
+
+<!-- Navigation Bar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
+
+<!-- Page Header -->
+<section class="quizzes-page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="quizzes-page-title">
+                    <span class="text-gradient">Все викторины</span>
+                </h1>
+                <p class="quizzes-page-subtitle">
+                    Откройте для себя увлекательные викторины на самые разные темы.
+                    Играйте, создавайте, соревнуйтесь!
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a th:href="@{/quizzes/create}" class="btn btn-primary btn-lg btn-glow" th:if="${#authorization.expression('isAuthenticated()')}">
+                    <i class="bi bi-plus-circle me-2"></i>Создать викторину
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="container">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+            <div class="filters-section" id="filtersSection">
+                <div class="filters-header">
+                    <h3 class="filters-title">
+                        <i class="bi bi-funnel me-2"></i>Фильтры
+                    </h3>
+                    <a th:href="@{/quizzes}" class="reset-filters">
+                        <i class="bi bi-x-circle me-1"></i>Сбросить
+                    </a>
+                </div>
+
+                <!-- Search -->
+                <div class="filter-group">
+                    <div class="filter-group-title">
+                        <i class="bi bi-search"></i>Поиск
+                    </div>
+                    <div class="search-input-group">
+                        <input type="text"
+                               class="search-input"
+                               id="searchInput"
+                               placeholder="Название или описание"
+                               th:value="${search}">
+                        <i class="bi bi-search search-icon"></i>
+                    </div>
+                </div>
+
+                <!-- Categories -->
+                <div class="filter-group" th:if="${categories != null && !categories.empty}">
+                    <div class="filter-group-title">
+                        <i class="bi bi-tags"></i>Категории
+                    </div>
+                    <div class="categories-list">
+                        <div th:each="category : ${categories}" class="category-item">
+                            <input type="checkbox"
+                                   th:id="${'category-' + category.id}"
+                                   th:value="${category.id}"
+                                   th:checked="${selectedCategories != null && selectedCategories.contains(category.id)}">
+                            <label th:for="${'category-' + category.id}">
+                                <span th:text="${category.name}"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Difficulty -->
+                <div class="filter-group">
+                    <div class="filter-group-title">
+                        <i class="bi bi-speedometer2"></i>Сложность
+                    </div>
+                    <div class="difficulty-options">
+                        <div class="difficulty-option">
+                            <input type="checkbox"
+                                   id="difficulty-easy"
+                                   value="EASY"
+                                   th:checked="${selectedDifficulties != null && selectedDifficulties.contains('EASY')}">
+                            <label for="difficulty-easy" class="difficulty-label">
+                                <span class="difficulty-dot easy"></span>
+                                <span>Легкая</span>
+                            </label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="checkbox"
+                                   id="difficulty-medium"
+                                   value="MEDIUM"
+                                   th:checked="${selectedDifficulties != null && selectedDifficulties.contains('MEDIUM')}">
+                            <label for="difficulty-medium" class="difficulty-label">
+                                <span class="difficulty-dot medium"></span>
+                                <span>Средняя</span>
+                            </label>
+                        </div>
+                        <div class="difficulty-option">
+                            <input type="checkbox"
+                                   id="difficulty-hard"
+                                   value="HARD"
+                                   th:checked="${selectedDifficulties != null && selectedDifficulties.contains('HARD')}">
+                            <label for="difficulty-hard" class="difficulty-label">
+                                <span class="difficulty-dot hard"></span>
+                                <span>Сложная</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sort -->
+                <div class="filter-group">
+                    <div class="filter-group-title">
+                        <i class="bi bi-sort-down"></i>Сортировка
+                    </div>
+                    <div class="sort-dropdown">
+                        <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            <span id="sortLabel" th:text="${sortLabel}">По популярности</span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="#" data-sort="popular">
+                                    <i class="bi bi-fire me-2"></i>По популярности
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-sort="rating">
+                                    <i class="bi bi-star me-2"></i>По рейтингу
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-sort="newest">
+                                    <i class="bi bi-clock me-2"></i>Сначала новые
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#" data-sort="oldest">
+                                    <i class="bi bi-clock-history me-2"></i>Сначала старые
+                                </a>
+                            </li>
+                        </ul>
+                        <input type="hidden" id="sortBy" th:value="${sortBy}">
+                    </div>
+                </div>
+
+                <!-- Active Filters -->
+                <div class="active-filters" id="activeFilters">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Quizzes Content -->
+        <div class="col-lg-9">
+            <!-- Initial Content Loaded on Server -->
+            <div id="quizzesContent">
+                <!-- Initial load (not AJAX) -->
+                <div class="quizzes-header">
+                    <div class="quizzes-count">
+                        <span th:if="${quizzes != null && !quizzes.empty}">
+                            Найдено <span class="count-number" th:text="${totalElements}">0</span> викторин
+                        </span>
+                        <span th:unless="${quizzes != null && !quizzes.empty}">
+                            Викторины не найдены
+                        </span>
+                    </div>
+                    <div class="view-toggle" th:if="${quizzes != null && !quizzes.empty}">
+                        <button class="view-toggle-btn active" data-view="grid" id="gridViewBtn">
+                            <i class="bi bi-grid-3x3-gap"></i>
+                        </button>
+                        <button class="view-toggle-btn" data-view="list" id="listViewBtn">
+                            <i class="bi bi-list"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- No Results (initial) -->
+                <div th:if="${quizzes != null && quizzes.empty}" class="no-results">
+                    <div class="no-results-icon">
+                        <i class="bi bi-question-circle"></i>
+                    </div>
+                    <h3 class="no-results-title">Викторины не найдены</h3>
+                    <p class="no-results-text">
+                        <span th:if="${noResultsMessage != null}" th:text="${noResultsMessage}">
+                            Попробуйте изменить параметры поиска или сбросить фильтры
+                        </span>
+                        <span th:unless="${noResultsMessage != null}">
+                            Попробуйте изменить параметры поиска или сбросить фильтры
+                        </span>
+                    </p>
+                    <div class="no-results-actions">
+                        <a th:href="@{/quizzes}" class="btn btn-outline-primary me-2">
+                            <i class="bi bi-funnel me-1"></i>Сбросить фильтры
+                        </a>
+                        <a th:href="@{/quizzes/create}" class="btn btn-primary" th:if="${#authorization.expression('isAuthenticated()') && selectedCategory != null && !hasQuizzesInCategory}">
+                            <i class="bi bi-plus-circle me-2"></i>Создать первую викторину в категории <span th:text="${selectedCategory.name}"></span>
+                        </a>
+                        <a th:href="@{/quizzes/create}" class="btn btn-primary" th:unless="${selectedCategory != null && !hasQuizzesInCategory}" th:if="${#authorization.expression('isAuthenticated()')}">
+                            <i class="bi bi-plus-circle me-2"></i>Создать первую викторину
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quizzes Grid/List (initial) -->
+                <div th:if="${quizzes != null && !quizzes.empty}"
+                     th:classappend="${view == 'list'} ? 'quiz-card-list' : 'quiz-card-grid'"
+                     id="quizzesContainer">
+                    <div th:each="quiz : ${quizzes}" class="quiz-card">
+                        <div class="quiz-header">
+                            <span class="quiz-category" th:text="${quiz.category?.name} ?: 'Без категории'"></span>
+                            <span th:classappend="${'quiz-difficulty ' + quiz.difficultyLevel.name().toLowerCase()}"
+                                  th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
+                            (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></span>
+                        </div>
+                        <div class="quiz-body">
+                            <h3 class="quiz-title" th:text="${quiz.title}"></h3>
+                            <p class="quiz-description" th:text="${quiz.description}"></p>
+
+                            <!-- Rating -->
+                            <div class="quiz-rating" th:if="${quiz.averageRating != null && quiz.averageRating > 0}">
+                                <div class="stars">
+                                    <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                       th:classappend="${i <= quiz.averageRating} ? 'bi bi-star-fill' : 'bi bi-star'">
+                                    </i>
+                                </div>
+                                <span class="rating-count" th:text="${quiz.ratingCounts != null ? quiz.ratingCounts + ' оценок' : 'Нет оценок'}"></span>
+                            </div>
+
+                            <div class="quiz-meta-extended">
+                                <div class="quiz-plays">
+                                    <i class="bi bi-play-circle"></i>
+                                    <span th:text="${quiz.playsCount != null ? quiz.playsCount + ' игр' : '0 игр'}"></span>
+                                </div>
+                                <div class="quiz-date">
+                                    <i class="bi bi-calendar"></i>
+                                    <span th:text="${quiz.createdAt != null ? #temporals.format(quiz.createdAt, 'dd.MM.yyyy') : 'Неизвестно'}"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="quiz-footer">
+                            <a th:href="@{/quiz/play/{id}(id=${quiz.id})}" class="btn btn-primary btn-sm mb-2" th:if="${#authorization.expression('isAuthenticated()')}">
+                                <i class="bi bi-play-fill me-1"></i>Играть
+                            </a>
+                            <a th:href="@{/quiz/view/{id}(id=${quiz.id})}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-info-circle me-1"></i>Подробнее
+                            </a>
+                            <div class="quiz-meta mt-3">
+                                <div class="quiz-author">
+                                    <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
+                                         alt="Author"
+                                         class="author-avatar">
+                                    <div>
+                                        <div class="author-name" th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></div>
+                                        <small>Создатель</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination (initial) -->
+                <div th:if="${page != null && page.totalPages > 1}" class="pagination-container">
+                    <nav>
+                        <ul class="pagination">
+                            <!-- Previous page -->
+                            <li th:classappend="${page.number == 0} ? 'disabled' : ''" class="page-item">
+                                <a class="page-link"
+                                   th:if="${page.number > 0}"
+                                   th:href="@{/quizzes(page=${page.number - 1}, size=${page.size},
+                                          search=${search},
+                                          categories=${categories != null ? #strings.join(selectedCategories, ',') : null},
+                                          difficulty=${difficulty},
+                                          sort=${sort})}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                                <span class="page-link disabled" th:unless="${page.number > 0}">
+                                    <i class="bi bi-chevron-left"></i>
+                                </span>
+                            </li>
+
+                            <!-- Page numbers -->
+                            <li th:each="pageNum : ${#numbers.sequence(1, page.totalPages)}"
+                                th:classappend="${page.number + 1 == pageNum} ? 'active' : ''"
+                                class="page-item">
+                                <a class="page-link"
+                                   th:href="@{/quizzes(page=${pageNum - 1}, size=${page.size},
+                                          search=${search},
+                                          categories=${categories != null ? #strings.join(selectedCategories, ',') : null},
+                                          difficulty=${difficulty},
+                                          sort=${sort})}"
+                                   th:text="${pageNum}"></a>
+                            </li>
+
+                            <!-- Next page -->
+                            <li th:classappend="${page.number + 1 == page.totalPages} ? 'disabled' : ''" class="page-item">
+                                <a class="page-link"
+                                   th:if="${page.number + 1 < page.totalPages}"
+                                   th:href="@{/quizzes(page=${page.number + 1}, size=${page.size},
+                                          search=${search},
+                                          categories=${categories != null ? #strings.join(selectedCategories, ',') : null},
+                                          difficulty=${difficulty},
+                                          sort=${sort})}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                                <span class="page-link disabled" th:unless="${page.number + 1 < page.totalPages}">
+                                    <i class="bi bi-chevron-right"></i>
+                                </span>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Filters Toggle -->
+<button class="mobile-filters-toggle" id="mobileFiltersToggle">
+    <i class="bi bi-funnel"></i>
+</button>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="footer-brand">
+                    <i class="bi bi-controller me-2"></i>
+                    <span class="brand-text">Fun<span class="brand-highlight">Quizzes</span></span>
+                </div>
+                <p class="footer-about mt-3">
+                    Платформа для интеллектуальных баталий.
+                    Создавай викторины, бросай вызов друзьям, становись чемпионом!
+                </p>
+            </div>
+
+            <div class="col-lg-2 col-md-4 mb-4">
+                <h5 class="footer-heading">Навигация</h5>
+                <ul class="footer-links">
+                    <li><a th:href="@{/}">Главная</a></li>
+                    <li><a th:href="@{/quizzes}">Викторины</a></li>
+                    <li><a th:href="@{/users/profile}" th:if="${#authorization.expression('isAuthenticated()')}">Профиль</a></li>
+                    <li><a th:href="@{/quizzes/create}" th:if="${#authorization.expression('isAuthenticated()')}">Создать викторину</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-2 col-md-4 mb-4">
+                <h5 class="footer-heading">Аккаунт</h5>
+                <ul class="footer-links">
+                    <li><a th:href="@{/users/log-in}" th:unless="${#authorization.expression('isAuthenticated()')}">Вход</a></li>
+                    <li><a th:href="@{/users/sing-up}" th:unless="${#authorization.expression('isAuthenticated()')}">Регистрация</a></li>
+                    <li><a th:href="@{/users/profile}" th:if="${#authorization.expression('isAuthenticated()')}">Профиль</a></li>
+                    <li><a th:href="@{/quizzes/my}" th:if="${#authorization.expression('isAuthenticated()')}">Мои викторины</a></li>
+                </ul>
+            </div>
+
+            <div class="col-lg-4 col-md-4 mb-4">
+                <h5 class="footer-heading">Контакты</h5>
+                <ul class="footer-contact">
+                    <li><i class="bi bi-envelope"></i> support@funquizzes.com</li>
+                    <li><i class="bi bi-telephone"></i> +375 (29) 123-45-67</li>
+                    <li><i class="bi bi-geo-alt"></i> Брест, Беларусь</li>
+                </ul>
+                <div class="footer-social mt-4">
+                    <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-telegram"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-meta"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-github"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <hr class="footer-divider my-4">
+
+        <div class="footer-bottom">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; 2025 FunQuizzes. Все права защищены.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <a href="#" class="footer-link me-3">Политика</a>
+                    <a href="#" class="footer-link">Условия</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Custom JavaScript -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize view
+        const savedView = localStorage.getItem('quizView') || 'grid';
+        setView(savedView);
+
+        // Setup filter handlers
+        setupFilterHandlers();
+
+        // Update active filters on initial load
+        updateActiveFilters();
+
+        // Mobile filters toggle
+        const mobileToggle = document.getElementById('mobileFiltersToggle');
+        if (mobileToggle) {
+            mobileToggle.addEventListener('click', toggleMobileFilters);
+        }
+
+        // Adjust padding for fixed navbar
+        const navbar = document.querySelector('.navbar.fixed-top');
+        if (navbar) {
+            document.body.style.paddingTop = navbar.offsetHeight + 'px';
+        }
+
+        // View toggle buttons
+        const gridBtn = document.getElementById('gridViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+
+        if (gridBtn) gridBtn.addEventListener('click', () => setView('grid'));
+        if (listBtn) listBtn.addEventListener('click', () => setView('list'));
+    });
+
+    function setView(view) {
+        const container = document.getElementById('quizzesContainer');
+        const gridBtn = document.getElementById('gridViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+
+        if (!container) return;
+
+        if (view === 'grid') {
+            container.classList.remove('quiz-card-list');
+            container.classList.add('quiz-card-grid');
+            if (gridBtn) gridBtn.classList.add('active');
+            if (listBtn) listBtn.classList.remove('active');
+        } else {
+            container.classList.remove('quiz-card-grid');
+            container.classList.add('quiz-card-list');
+            if (gridBtn) gridBtn.classList.remove('active');
+            if (listBtn) listBtn.classList.add('active');
+        }
+
+        localStorage.setItem('quizView', view);
+    }
+
+    function setupFilterHandlers() {
+        // Search input with debounce
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    applyFiltersAjax();
+                }, 500);
+            });
+        }
+
+        // Category checkboxes
+        document.querySelectorAll('.category-item input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', applyFiltersAjax);
+        });
+
+        // Difficulty checkboxes
+        document.querySelectorAll('.difficulty-option input[type="checkbox"]').forEach(checkbox => {
+            checkbox.addEventListener('change', applyFiltersAjax);
+        });
+
+        // Sort dropdown
+        document.querySelectorAll('.sort-dropdown .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sortBy = this.dataset.sort;
+                const sortInput = document.getElementById('sortBy');
+                const sortLabel = document.getElementById('sortLabel');
+
+                if (sortInput) sortInput.value = sortBy;
+                if (sortLabel) sortLabel.textContent = this.textContent.trim();
+
+                applyFiltersAjax();
+            });
+        });
+    }
+
+    function applyFiltersAjax() {
+        const params = getCurrentFilters();
+        params.append('ajax', 'true');
+
+        // Show loading
+        showLoadingIndicator();
+
+        // Update URL without reload
+        const cleanParams = getCurrentFilters();
+        const queryString = cleanParams.toString();
+        window.history.pushState({}, '', `/quizzes${queryString ? '?' + queryString : ''}`);
+
+        fetch(`/quizzes?${params.toString()}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+
+                // Look for the fragment - IMPORTANT: check both options
+                let fragmentDiv = doc.querySelector('div[th\\:fragment="quizzesList"]');
+
+                // If fragment not found with escaped selector, try another approach
+                if (!fragmentDiv) {
+                    // Try to find by content structure
+                    const allDivs = doc.querySelectorAll('div');
+                    for (let div of allDivs) {
+                        if (div.innerHTML.includes('quizzes-header') ||
+                            div.innerHTML.includes('quizzesContainer')) {
+                            fragmentDiv = div;
+                            break;
+                        }
+                    }
+                }
+
+                if (fragmentDiv) {
+                    // Replace content
+                    document.getElementById('quizzesContent').innerHTML = fragmentDiv.innerHTML;
+
+                    // Reinitialize view toggle
+                    const savedView = localStorage.getItem('quizView') || 'grid';
+                    setView(savedView);
+
+                    // Reattach event listeners
+                    reattachViewToggleListeners();
+
+                    // Reattach pagination handlers
+                    reattachPaginationHandlers();
+
+                    // Update active filters
+                    updateActiveFilters();
+                } else {
+                    // If AJAX fails, fallback to normal page load
+                    console.warn('Фрагмент не найден, перезагружаем страницу');
+                    const cleanParams = getCurrentFilters();
+                    window.location.href = `/quizzes${cleanParams.toString() ? '?' + cleanParams.toString() : ''}`;
+                }
+
+                hideLoadingIndicator();
+            })
+            .catch(error => {
+                console.error('AJAX Error:', error);
+                hideLoadingIndicator();
+
+                // Fallback to normal page load
+                const cleanParams = getCurrentFilters();
+                window.location.href = `/quizzes${cleanParams.toString() ? '?' + cleanParams.toString() : ''}`;
+            });
+    }
+
+    function getCurrentFilters() {
+        const params = new URLSearchParams();
+
+        // Search
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput && searchInput.value.trim()) {
+            params.append('search', searchInput.value.trim());
+        }
+
+        // Categories
+        const selectedCategories = [];
+        document.querySelectorAll('.category-item input[type="checkbox"]:checked').forEach(cb => {
+            selectedCategories.push(cb.value);
+        });
+        if (selectedCategories.length > 0) {
+            params.append('categories', selectedCategories.join(','));
+        }
+
+        // Difficulty
+        const selectedDifficulties = [];
+        document.querySelectorAll('.difficulty-option input[type="checkbox"]:checked').forEach(cb => {
+            selectedDifficulties.push(cb.value);
+        });
+        if (selectedDifficulties.length > 0) {
+            params.append('difficulty', selectedDifficulties.join(','));
+        }
+
+        // Sort
+        const sortInput = document.getElementById('sortBy');
+        if (sortInput && sortInput.value) {
+            params.append('sort', sortInput.value);
+        }
+
+        // Reset to page 0 when filters change
+        params.append('page', '0');
+        params.append('size', '12');
+
+        return params;
+    }
+
+    function reattachViewToggleListeners() {
+        const gridBtn = document.getElementById('gridViewBtn');
+        const listBtn = document.getElementById('listViewBtn');
+
+        if (gridBtn) {
+            gridBtn.addEventListener('click', function() {
+                setView('grid');
+            });
+        }
+
+        if (listBtn) {
+            listBtn.addEventListener('click', function() {
+                setView('list');
+            });
+        }
+    }
+
+    function reattachPaginationHandlers() {
+        // For pagination links, we'll let them work normally (full page reload)
+        // or we can make them AJAX too if needed
+        document.querySelectorAll('.pagination-container a.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // For now, let normal navigation work
+                // To make it AJAX, we would need to parse the href and update filters
+            });
+        });
+    }
+
+    function showLoadingIndicator() {
+        // Create or show loading indicator
+        let loader = document.getElementById('ajax-loader');
+        if (!loader) {
+            loader = document.createElement('div');
+            loader.id = 'ajax-loader';
+            loader.className = 'ajax-loader';
+            loader.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Загрузка...</span></div>';
+            loader.style.cssText = 'text-align: center; padding: 20px; display: none;';
+            document.getElementById('quizzesContent').prepend(loader);
+        }
+        loader.style.display = 'block';
+    }
+
+    function hideLoadingIndicator() {
+        const loader = document.getElementById('ajax-loader');
+        if (loader) {
+            loader.style.display = 'none';
+        }
+    }
+
+    function updateActiveFilters() {
+        const activeFilters = document.getElementById('activeFilters');
+        if (!activeFilters) return;
+
+        activeFilters.innerHTML = '';
+
+        // Search filter
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput && searchInput.value.trim()) {
+            const badge = createFilterBadge(`Поиск: "${searchInput.value}"`, 'search', searchInput.value);
+            activeFilters.appendChild(badge);
+        }
+
+        // Category filters
+        document.querySelectorAll('.category-item input[type="checkbox"]:checked').forEach(cb => {
+            const label = cb.parentElement.querySelector('label span:first-child').textContent;
+            const badge = createFilterBadge(`Категория: ${label}`, 'category', cb.value);
+            activeFilters.appendChild(badge);
+        });
+
+        // Difficulty filters
+        document.querySelectorAll('.difficulty-option input[type="checkbox"]:checked').forEach(cb => {
+            const label = cb.parentElement.querySelector('.difficulty-label span:last-child').textContent;
+            const badge = createFilterBadge(`Сложность: ${label}`, 'difficulty', cb.value);
+            activeFilters.appendChild(badge);
+        });
+    }
+
+    function createFilterBadge(text, type, value) {
+        const badge = document.createElement('div');
+        badge.className = 'filter-badge';
+        badge.innerHTML = `
+            ${text}
+            <button class="remove-filter" data-type="${type}" data-value="${value}">
+                <i class="bi bi-x"></i>
+            </button>
+        `;
+
+        badge.querySelector('.remove-filter').addEventListener('click', function() {
+            removeFilter(type, value);
+        });
+
+        return badge;
+    }
+
+    function removeFilter(type, value) {
+        switch (type) {
+            case 'search':
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) searchInput.value = '';
+                break;
+            case 'category':
+                const categoryCheckbox = document.querySelector(`.category-item input[value="${value}"]`);
+                if (categoryCheckbox) categoryCheckbox.checked = false;
+                break;
+            case 'difficulty':
+                const difficultyCheckbox = document.querySelector(`.difficulty-option input[value="${value}"]`);
+                if (difficultyCheckbox) difficultyCheckbox.checked = false;
+                break;
+        }
+
+        applyFiltersAjax();
+    }
+
+    function toggleMobileFilters() {
+        const filtersSection = document.getElementById('filtersSection');
+        if (filtersSection) {
+            filtersSection.classList.toggle('mobile-hidden');
+        }
+    }
+</script>
+</body>
+</html>

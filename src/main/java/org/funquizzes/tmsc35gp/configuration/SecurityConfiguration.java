@@ -23,6 +23,8 @@ public class SecurityConfiguration {
                                 "/users/sing-up",
                                 "/users/log-in",
                                 "/users/profile/view/**", //публичные профили
+                                "/quizzes",
+                                "/quizzes/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",

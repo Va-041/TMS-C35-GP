@@ -359,7 +359,7 @@
         </div>
 
         <div class="text-center mt-5">
-            <a href="#" class="btn btn-outline-primary btn-lg">
+            <a href="/quizzes" class="btn btn-outline-primary btn-lg">
                 Смотреть все викторины <i class="bi bi-arrow-right ms-2"></i>
             </a>
         </div>
@@ -378,62 +378,128 @@
             </p>
         </div>
 
-        <div class="row g-4">
-            <!-- Category 1 -->
-            <div class="col-md-3 col-sm-6">
-                <a href="#" class="category-card animate__animated animate__fadeInUp">
-                    <div class="category-icon category-tech">
-                        <i class="bi bi-code-slash"></i>
+        <!-- Карусель категорий -->
+        <div th:if="${categories.size() > 4}"
+             id="categoriesCarousel"
+             class="carousel slide"
+             data-bs-ride="carousel"
+             data-bs-interval="5000">
+
+            <!-- Слайды -->
+            <div class="carousel-inner">
+                <!-- Создаем слайды по 4 категории в каждом -->
+                <div th:each="page : ${#numbers.sequence(0, (categories.size() - 1) / 4)}"
+                     th:class="${page == 0} ? 'carousel-item active' : 'carousel-item'">
+                    <div class="row">
+                        <!-- Первая категория в слайде -->
+                        <div th:if="${page * 4 < categories.size()}" class="col-lg-3 col-md-6 mb-4">
+                            <div th:with="category=${categories[page * 4]}">
+                                <a th:href="@{/quizzes(categories=${category.id})}"
+                                   class="category-card h-100">
+                                    <div class="category-icon"
+                                         th:style="'background: linear-gradient(135deg, ' + ${category.color} + ', ' + ${category.color} + '80);'">
+                                        <i th:class="${category.icon}"></i>
+                                    </div>
+                                    <h4 th:text="${category.name}"></h4>
+                                    <p th:text="${category.quizzes != null && !category.quizzes.isEmpty()} ? 'Кол-во викторин: ' + ${category.quizzes.size()} : 'Викторин нет'"></p>
+                                    <div class="category-hover">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Вторая категория в слайде -->
+                        <div th:if="${page * 4 + 1 < categories.size()}" class="col-lg-3 col-md-6 mb-4">
+                            <div th:with="category=${categories[page * 4 + 1]}">
+                                <a th:href="@{/quizzes(categories=${category.id})}"
+                                   class="category-card h-100">
+                                    <div class="category-icon"
+                                         th:style="'background: linear-gradient(135deg, ' + ${category.color} + ', ' + ${category.color} + '80);'">
+                                        <i th:class="${category.icon}"></i>
+                                    </div>
+                                    <h4 th:text="${category.name}"></h4>
+                                    <p th:text="${category.quizzes != null && !category.quizzes.isEmpty()} ? 'Кол-во викторин: ' + ${category.quizzes.size()} : 'Викторин нет'"></p>
+                                    <div class="category-hover">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Третья категория в слайде -->
+                        <div th:if="${page * 4 + 2 < categories.size()}" class="col-lg-3 col-md-6 mb-4">
+                            <div th:with="category=${categories[page * 4 + 2]}">
+                                <a th:href="@{/quizzes(categories=${category.id})}"
+                                   class="category-card h-100">
+                                    <div class="category-icon"
+                                         th:style="'background: linear-gradient(135deg, ' + ${category.color} + ', ' + ${category.color} + '80);'">
+                                        <i th:class="${category.icon}"></i>
+                                    </div>
+                                    <h4 th:text="${category.name}"></h4>
+                                    <p th:text="${category.quizzes != null && !category.quizzes.isEmpty()} ? 'Кол-во викторин: ' + ${category.quizzes.size()} : 'Викторин нет'"></p>
+                                    <div class="category-hover">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Четвертая категория в слайде -->
+                        <div th:if="${page * 4 + 3 < categories.size()}" class="col-lg-3 col-md-6 mb-4">
+                            <div th:with="category=${categories[page * 4 + 3]}">
+                                <a th:href="@{/quizzes(categories=${category.id})}"
+                                   class="category-card h-100">
+                                    <div class="category-icon"
+                                         th:style="'background: linear-gradient(135deg, ' + ${category.color} + ', ' + ${category.color} + '80);'">
+                                        <i th:class="${category.icon}"></i>
+                                    </div>
+                                    <h4 th:text="${category.name}"></h4>
+                                    <p th:text="${category.quizzes != null && !category.quizzes.isEmpty()} ? 'Кол-во викторин: ' + ${category.quizzes.size()} : 'Викторин нет'"></p>
+                                    <div class="category-hover">
+                                        <i class="bi bi-arrow-right"></i>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
                     </div>
-                    <h4>Технологии</h4>
-                    <p>250+ викторин</p>
-                    <div class="category-hover">
-                        <i class="bi bi-arrow-right"></i>
-                    </div>
-                </a>
+                </div>
             </div>
 
-            <!-- Category 2 -->
-            <div class="col-md-3 col-sm-6">
-                <a href="#" class="category-card animate__animated animate__fadeInUp animate__delay-1s">
-                    <div class="category-icon category-science">
-                        <i class="bi bi-cpu"></i>
-                    </div>
-                    <h4>Наука</h4>
-                    <p>180+ викторин</p>
-                    <div class="category-hover">
-                        <i class="bi bi-arrow-right"></i>
-                    </div>
-                </a>
-            </div>
+            <!-- Кнопки навигации -->
+            <button class="carousel-control-prev" type="button" data-bs-target="#categoriesCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Предыдущий</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#categoriesCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Следующий</span>
+            </button>
+        </div>
 
-            <!-- Category 3 -->
-            <div class="col-md-3 col-sm-6">
-                <a href="#" class="category-card animate__animated animate__fadeInUp animate__delay-2s">
-                    <div class="category-icon category-history">
-                        <i class="bi bi-book"></i>
+        <!-- Если категорий 4 или меньше, показываем без карусели -->
+        <div th:if="${categories.size() <= 4}" class="row">
+            <div th:each="category : ${categories}" class="col-lg-3 col-md-6 mb-4">
+                <a th:href="@{/quizzes(categories=${category.id})}"
+                   class="category-card h-100 animate__animated animate__fadeInUp">
+                    <div class="category-icon"
+                         th:style="'background: linear-gradient(135deg, ' + ${category.color} + ', ' + ${category.color} + '80);'">
+                        <i th:class="${category.icon}"></i>
                     </div>
-                    <h4>История</h4>
-                    <p>150+ викторин</p>
+                    <h4 th:text="${category.name}"></h4>
+                    <p th:text="${category.quizzes != null && !category.quizzes.isEmpty()} ? 'Кол-во викторин: ' + category.quizzes.size() : 'Викторин нет'"></p>
                     <div class="category-hover">
                         <i class="bi bi-arrow-right"></i>
                     </div>
                 </a>
             </div>
+        </div>
 
-            <!-- Category 4 -->
-            <div class="col-md-3 col-sm-6">
-                <a href="#" class="category-card animate__animated animate__fadeInUp animate__delay-3s">
-                    <div class="category-icon category-sports">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                    <h4>Спорт</h4>
-                    <p>120+ викторин</p>
-                    <div class="category-hover">
-                        <i class="bi bi-arrow-right"></i>
-                    </div>
-                </a>
-            </div>
+        <!-- Кнопка "Все категории" -->
+        <div class="text-center mt-4">
+            <a th:href="@{/quizzes}" class="btn btn-outline-primary">
+                Все категории <i class="bi bi-arrow-right ms-2"></i>
+            </a>
         </div>
     </div>
 </section>
@@ -602,46 +668,53 @@
 <!-- Counter Animation -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Animated counters
-        const counters = document.querySelectorAll('.stat-number');
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const counter = entry.target;
-                    const target = +counter.getAttribute('data-count');
-                    const duration = 2000;
-                    const step = target / (duration / 16);
-                    let current = 0;
+        // Установка одинаковой высоты для всех квадратных карточек категорий
+        const equalizeCategoryHeights = () => {
+            const categoryCards = document.querySelectorAll('.category-card');
+            if (categoryCards.length === 0) return;
+        };
 
-                    const updateCounter = () => {
-                        current += step;
-                        if (current < target) {
-                            counter.textContent = Math.floor(current);
-                            setTimeout(updateCounter, 16);
-                        } else {
-                            counter.textContent = target;
-                        }
-                    };
+        // Центрирование карточек в карусели для квадратных карточек
+        const centerCarouselCards = () => {
+            const carousel = document.getElementById('categoriesCarousel');
+            if (!carousel) return;
 
-                    updateCounter();
-                    observer.unobserve(counter);
+            equalizeCategoryHeights();
+
+            const carouselItems = carousel.querySelectorAll('.carousel-item');
+            carouselItems.forEach(item => {
+                const row = item.querySelector('.row');
+                if (row) {
+                    const categoryCards = item.querySelectorAll('.category-card');
+                    const cardCount = categoryCards.length;
+
+                    if (cardCount < 4) {
+                        row.classList.add('justify-content-center');
+                        row.classList.add('align-items-stretch');
+                        row.style.minHeight = '300px';
+                    }
                 }
             });
-        }, { threshold: 0.5 });
+        };
 
-        counters.forEach(counter => observer.observe(counter));
+        // Вызываем при загрузке
+        equalizeCategoryHeights();
+        centerCarouselCards();
 
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.classList.add('scrolled');
-            } else {
-                navbar.classList.remove('scrolled');
-            }
+        const carousel = document.getElementById('categoriesCarousel');
+        if (carousel) {
+            carousel.addEventListener('slid.bs.carousel', function() {
+                setTimeout(centerCarouselCards, 50);
+            });
+        }
+
+        // Пересчитываем при изменении размера окна
+        window.addEventListener('resize', function() {
+            setTimeout(equalizeCategoryHeights, 100);
         });
     });
-</script>
 
+
+</script>
 </body>
 </html>
