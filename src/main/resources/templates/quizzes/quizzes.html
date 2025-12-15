@@ -34,11 +34,6 @@
                     Играйте, создавайте, соревнуйтесь!
                 </p>
             </div>
-            <div class="col-lg-4 text-lg-end">
-                <a th:href="@{/quizzes/create}" class="btn btn-primary btn-lg btn-glow" th:if="${#authorization.expression('isAuthenticated()')}">
-                    <i class="bi bi-plus-circle me-2"></i>Создать викторину
-                </a>
-            </div>
         </div>
     </div>
 </section>
@@ -362,8 +357,6 @@
                 <ul class="footer-links">
                     <li><a th:href="@{/}">Главная</a></li>
                     <li><a th:href="@{/quizzes}">Викторины</a></li>
-                    <li><a th:href="@{/users/profile}" th:if="${#authorization.expression('isAuthenticated()')}">Профиль</a></li>
-                    <li><a th:href="@{/quizzes/create}" th:if="${#authorization.expression('isAuthenticated()')}">Создать викторину</a></li>
                 </ul>
             </div>
 
@@ -374,6 +367,7 @@
                     <li><a th:href="@{/users/sing-up}" th:unless="${#authorization.expression('isAuthenticated()')}">Регистрация</a></li>
                     <li><a th:href="@{/users/profile}" th:if="${#authorization.expression('isAuthenticated()')}">Профиль</a></li>
                     <li><a th:href="@{/quizzes/my}" th:if="${#authorization.expression('isAuthenticated()')}">Мои викторины</a></li>
+                    <li><a th:href="@{/quizzes/create}" th:if="${#authorization.expression('isAuthenticated()')}">Создать викторину</a></li>
                 </ul>
             </div>
 

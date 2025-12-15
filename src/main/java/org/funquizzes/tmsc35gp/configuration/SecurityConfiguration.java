@@ -22,9 +22,10 @@ public class SecurityConfiguration {
                                 "/",
                                 "/users/sing-up",
                                 "/users/log-in",
-                                "/users/profile/view/**", //публичные профили
+                                "/users/profile/view/**", // публичные профили
                                 "/quizzes",
-                                "/quizzes/**",
+                                "/quizzes/**",  // Просмотр викторин
+                                "/quiz/view/**", // Просмотр конкретной викторины
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
@@ -32,10 +33,16 @@ public class SecurityConfiguration {
                                 "/fragments/**"
                         )
                         .permitAll()
-                        //только для авторизованных
-                        .requestMatchers("/users/profile/**")
-                        .authenticated()
-                        .requestMatchers("/quizzes/create", "/quizzes/my")
+                        // Только для авторизованных
+                        .requestMatchers(
+                                "/users/profile/**",
+                                "/users/profile/main/**",
+                                "/quizzes/create",
+                                "/quizzes/edit/**",
+                                "/quizzes/delete/**",
+                                "/quizzes/my",
+                                "/quiz/play/**"
+                        )
                         .authenticated()
                         // Остальные пути тоже требуют авторизации
                         .anyRequest()
@@ -47,7 +54,8 @@ public class SecurityConfiguration {
                         .permitAll())
                 .logout(customizer -> customizer
                         .logoutUrl("/users/logout")
-                        .logoutSuccessUrl("/"))
+                        .logoutSuccessUrl("/")
+                        .permitAll())
                 .build();
     }
 
@@ -55,7 +63,7 @@ public class SecurityConfiguration {
     private UserService userService;
 
     @Bean
-    public AuthenticationProvider authenticationProvider () {
+    public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(new BCryptPasswordEncoder(11));
         provider.setUserDetailsService(userService);

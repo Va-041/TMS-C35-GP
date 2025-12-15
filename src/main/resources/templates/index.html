@@ -112,6 +112,8 @@
                 </li>
             </ul>
 
+
+
             <!-- Auth Buttons -->
             <div class="d-flex" th:if="${#authorization.expression('isAuthenticated()')}">
                 <div class="dropdown">
@@ -212,32 +214,34 @@
     </div>
 </section>
 
-<!-- Call to Action -->
-<section class="cta-section">
-    <div class="container">
-        <div class="cta-card animate__animated animate__fadeInUp">
-            <div class="row align-items-center">
-                <div class="col-lg-8">
-                    <h2 class="cta-title">Готов стать чемпионом?</h2>
-                    <p class="cta-text">
-                        Присоединяйся к сообществу любителей интеллектуальных баталий!
-                        Создавай, играй, побеждай!
-                    </p>
-                </div>
-                <div class="col-lg-4 text-lg-end">
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a th:href="@{/users/sing-up}" class="btn btn-primary btn-lg btn-glow">
-                            <i class="bi bi-person-plus me-2"></i>Начать бесплатно
-                        </a>
-                        <a th:href="@{/users/log-in}" class="btn btn-outline-light btn-lg">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>Войти
-                        </a>
+<!-- Call to Action - только для анонимных пользователей -->
+<div th:unless="${#authorization.expression('isAuthenticated()')}">
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-card animate__animated animate__fadeInUp">
+                <div class="row align-items-center">
+                    <div class="col-lg-8">
+                        <h2 class="cta-title">Готов стать чемпионом?</h2>
+                        <p class="cta-text">
+                            Присоединяйся к сообществу любителей интеллектуальных баталий!
+                            Создавай, играй, побеждай!
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a th:href="@{/users/sing-up}" class="btn btn-primary btn-lg btn-glow">
+                                <i class="bi bi-person-plus me-2"></i>Начать бесплатно
+                            </a>
+                            <a th:href="@{/users/log-in}" class="btn btn-outline-light btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Войти
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</section>
+    </section>
+</div>
 
 <!-- Popular Quizzes -->
 <section id="quizzes" class="quizzes-section">
@@ -504,7 +508,7 @@
     </div>
 </section>
 
-<!-- How It Works -->
+<!-- How It Works - только для анонимных пользователей -->
 <section id="how-it-works" class="how-it-works-section">
     <div class="container">
         <div class="section-header">
@@ -521,11 +525,15 @@
             <div class="step animate__animated animate__fadeInLeft">
                 <div class="step-number">1</div>
                 <div class="step-content">
-                    <div class="step-icon">
-                        <i class="bi bi-person-plus"></i>
+                    <div class="step-icon-wrapper">
+                        <div class="step-icon">
+                            <i class="bi bi-person-plus"></i>
+                        </div>
+                        <div class="step-text">
+                            <h4>Регистрируйся</h4>
+                            <p>Создай аккаунт за 30 секунд. Укажи имя и почту - готово!</p>
+                        </div>
                     </div>
-                    <h4>Регистрируйся</h4>
-                    <p>Создай аккаунт за 30 секунд. Укажи имя и почту - готово!</p>
                 </div>
             </div>
 
@@ -533,11 +541,15 @@
             <div class="step animate__animated animate__fadeInLeft animate__delay-1s">
                 <div class="step-number">2</div>
                 <div class="step-content">
-                    <div class="step-icon">
-                        <i class="bi bi-search"></i>
+                    <div class="step-icon-wrapper">
+                        <div class="step-icon">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <div class="step-text">
+                            <h4>Выбирай викторину</h4>
+                            <p>Найди интересную тему среди тысяч викторин или создай свою.</p>
+                        </div>
                     </div>
-                    <h4>Выбирай викторину</h4>
-                    <p>Найди интересную тему среди тысяч викторин или создай свою.</p>
                 </div>
             </div>
 
@@ -545,11 +557,15 @@
             <div class="step animate__animated animate__fadeInLeft animate__delay-2s">
                 <div class="step-number">3</div>
                 <div class="step-content">
-                    <div class="step-icon">
-                        <i class="bi bi-controller"></i>
+                    <div class="step-icon-wrapper">
+                        <div class="step-icon">
+                            <i class="bi bi-controller"></i>
+                        </div>
+                        <div class="step-text">
+                            <h4>Играй и побеждай</h4>
+                            <p>Отвечай на вопросы, набирай очки и стань чемпионом!</p>
+                        </div>
                     </div>
-                    <h4>Играй и побеждай</h4>
-                    <p>Отвечай на вопросы, набирай очки и стань чемпионом!</p>
                 </div>
             </div>
         </div>
@@ -668,13 +684,12 @@
 <!-- Counter Animation -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Установка одинаковой высоты для всех квадратных карточек категорий
         const equalizeCategoryHeights = () => {
             const categoryCards = document.querySelectorAll('.category-card');
             if (categoryCards.length === 0) return;
         };
 
-        // Центрирование карточек в карусели для квадратных карточек
+        // Центрирование карточек в карусели
         const centerCarouselCards = () => {
             const carousel = document.getElementById('categoriesCarousel');
             if (!carousel) return;
@@ -711,6 +726,81 @@
         // Пересчитываем при изменении размера окна
         window.addEventListener('resize', function() {
             setTimeout(equalizeCategoryHeights, 100);
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Получаем все навигационные ссылки
+        const navLinks = document.querySelectorAll('.navbar-nav .nav-link');
+        // Получаем все секции
+        const sections = document.querySelectorAll('section[id]');
+
+        // Функция для активации текущего раздела
+        function activateCurrentSection() {
+            let current = '';
+
+            // Проходим по всем секциям
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+
+                // Проверяем, находится ли секция в области видимости
+                if (scrollY >= (sectionTop - 150)) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            // Удаляем активный класс у всех ссылок
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                // Убираем индикатор
+                link.classList.remove('active-indicator');
+            });
+
+            // Активируем соответствующую ссылку
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+
+                // Особый случай для главной страницы
+                if (current === '' && link.getAttribute('href') === '#') {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        // Вызываем при загрузке и прокрутке
+        window.addEventListener('scroll', activateCurrentSection);
+        activateCurrentSection(); // Вызываем сразу при загрузке
+
+        // Обработчик клика по ссылкам для плавной прокрутки
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+
+                // Проверяем, это якорная ссылка или нет
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+
+                    // Удаляем активный класс у всех ссылок
+                    navLinks.forEach(link => link.classList.remove('active'));
+
+                    // Добавляем активный класс текущей ссылке
+                    this.classList.add('active');
+
+                    // Плавная прокрутка
+                    const targetId = href.substring(1);
+                    const targetElement = document.getElementById(targetId);
+
+                    if (targetElement) {
+                        window.scrollTo({
+                            top: targetElement.offsetTop - 80,
+                            behavior: 'smooth'
+                        });
+                    }
+                }
+            });
         });
     });
 

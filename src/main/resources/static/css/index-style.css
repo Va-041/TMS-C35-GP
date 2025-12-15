@@ -25,6 +25,8 @@
     --glass-border: rgba(255, 255, 255, 0.1);
 }
 
+
+
 /* ===== BASE STYLES ===== */
 * {
     margin: 0;
@@ -40,6 +42,8 @@ body {
     overflow-x: hidden;
     scroll-behavior: smooth;
 }
+
+
 
 /* ===== TYPOGRAPHY ===== */
 h1, h2, h3, h4, h5, h6 {
@@ -59,6 +63,8 @@ h1, h2, h3, h4, h5, h6 {
     color: white;
     text-shadow: 2px 2px 0 var(--primary), 4px 4px 0 rgba(0, 0, 0, 0.1);
 }
+
+
 
 /* ===== NAVBAR ===== */
 .navbar-glass {
@@ -124,6 +130,8 @@ h1, h2, h3, h4, h5, h6 {
     background: var(--gradient-primary);
     border-radius: 2px;
 }
+
+
 
 /* ===== BUTTONS ===== */
 .btn-primary {
@@ -207,6 +215,8 @@ h1, h2, h3, h4, h5, h6 {
 .btn-glow {
     animation: glow 2s infinite alternate;
 }
+
+
 
 /* ===== HERO SECTION ===== */
 .hero-section {
@@ -395,6 +405,8 @@ h1, h2, h3, h4, h5, h6 {
     left: 5%;
 }
 
+
+
 /* ===== CTA SECTION ===== */
 .cta-section {
     padding: 80px 0;
@@ -422,6 +434,8 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0.9;
     max-width: 600px;
 }
+
+
 
 /* ===== QUIZZES SECTION ===== */
 .quizzes-section {
@@ -576,6 +590,8 @@ h1, h2, h3, h4, h5, h6 {
     color: var(--gray);
 }
 
+
+
 /* ===== CATEGORIES SECTION ===== */
 .categories-section {
     padding: 100px 0;
@@ -650,7 +666,7 @@ h1, h2, h3, h4, h5, h6 {
     filter: invert(25%) sepia(90%) saturate(3000%) hue-rotate(250deg);
 }
 
-/* Исправленные стили для карточек в карусели */
+/* стили для карточек в карусели */
 #categoriesCarousel .category-card {
     margin: 10px 15px;
     height: 280px;
@@ -678,7 +694,7 @@ h1, h2, h3, h4, h5, h6 {
     margin: 15px 0;
 }
 
-/* Основные стили карточек (оставляем все как было) */
+/* Основные стили карточек */
 .category-card {
     background: white;
     border-radius: var(--border-radius-md);
@@ -778,24 +794,27 @@ h1, h2, h3, h4, h5, h6 {
 /* ===== HOW IT WORKS ===== */
 .how-it-works-section {
     padding: 100px 0;
-    background: white;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.how-it-works-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none" opacity="0.03"><path d="M0,0 L100,0 L100,100 Z" fill="%236d28d9"/></svg>');
+    background-size: cover;
+    pointer-events: none;
 }
 
 .steps-container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     position: relative;
-}
-
-.steps-container::before {
-    content: '';
-    position: absolute;
-    top: 60px;
-    left: 100px;
-    right: 100px;
-    height: 2px;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
-    z-index: 1;
 }
 
 .step {
@@ -805,6 +824,15 @@ h1, h2, h3, h4, h5, h6 {
     margin-bottom: 4rem;
     position: relative;
     z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.step:hover {
+    transform: translateX(10px);
+}
+
+.step:last-child {
+    margin-bottom: 0;
 }
 
 .step-number {
@@ -819,35 +847,113 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.5rem;
     font-weight: 800;
     flex-shrink: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(109, 40, 217, 0.2);
+    position: relative;
+    z-index: 3;
+}
+
+.step:hover .step-number {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 12px 25px rgba(109, 40, 217, 0.3);
 }
 
 .step-content {
     flex-grow: 1;
+    background: white;
+    border-radius: var(--border-radius-lg);
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.step:hover .step-content {
+    border-color: var(--primary);
+    box-shadow: 0 15px 40px rgba(109, 40, 217, 0.15);
+    transform: translateY(-5px);
+}
+
+.step:hover .step-content::before {
+    opacity: 1;
+}
+
+.step-icon-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .step-icon {
-    width: 80px;
-    height: 80px;
-    background: rgba(109, 40, 217, 0.1);
+    width: 70px;
+    height: 70px;
+    background: rgba(109, 40, 217, 0.08);
     border-radius: var(--border-radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: var(--primary);
-    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
 }
 
-.step-content h4 {
+.step:hover .step-icon {
+    background: var(--gradient-primary);
+    color: white;
+    transform: translateY(-3px);
+}
+
+.step-text {
+    flex-grow: 1;
+}
+
+.step-text h4 {
     font-size: 1.4rem;
     margin-bottom: 0.8rem;
+    color: var(--dark);
+    font-weight: 600;
 }
 
-.step-content p {
+.step-text p {
     color: var(--gray);
     font-size: 1.05rem;
     line-height: 1.6;
+    margin: 0;
 }
+
+/* Коннекторы между шагами */
+@media (min-width: 768px) {
+    .step::after {
+        content: '';
+        position: absolute;
+        left: 30px;
+        top: 60px;
+        bottom: -4rem;
+        width: 2px;
+        background: linear-gradient(to bottom,
+        rgba(109, 40, 217, 0.2),
+        rgba(109, 40, 217, 0.1),
+        transparent);
+        z-index: 1;
+    }
+
+    .step:hover::after {
+        background: linear-gradient(to bottom,
+        var(--primary),
+        rgba(109, 40, 217, 0.5),
+        transparent);
+    }
+
+    .step:last-child::after {
+        display: none;
+    }
+}
+
+
 
 /* ===== STATS SECTION ===== */
 .stats-section {
@@ -888,6 +994,8 @@ h1, h2, h3, h4, h5, h6 {
     opacity: 0.9;
     font-size: 1.1rem;
 }
+
+
 
 /* ===== FOOTER ===== */
 .footer {
@@ -994,6 +1102,8 @@ h1, h2, h3, h4, h5, h6 {
 .footer-link:hover {
     color: white;
 }
+
+
 
 /* ===== ANIMATIONS ===== */
 @keyframes float {
