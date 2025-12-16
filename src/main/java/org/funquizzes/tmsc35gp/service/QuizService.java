@@ -20,7 +20,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class QuizService {
@@ -140,9 +139,10 @@ public class QuizService {
     }
 
     public Quiz getPublicQuizById(Long id) {
-        Quiz quiz = findById(id);
-        if (quiz != null && quiz.isPublic()) {
-            return quiz;
+        // Используем специальный метод репозитория для загрузки с вопросами
+        Optional<Quiz> quiz = quizRepository.findByIdWithQuestions(id);
+        if (quiz.isPresent() && quiz.get().isPublic()) {
+            return quiz.get();
         }
         return null;
     }
@@ -196,9 +196,6 @@ public class QuizService {
     public boolean existsByCategoryIdsAndPublicTrue(List<Long> categoryIds) {
         return quizRepository.existsByCategoryIdsAndPublicTrue(categoryIds);
     }
-
-
-
 
     @Transactional
     public void incrementPlaysCount(Long quizId) {

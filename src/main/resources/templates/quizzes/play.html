@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Вопрос ' + ${questionNumber} + ' | ' + ${quiz.title}">Играем в викторину</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+    <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div class="play-container">
+    <!-- Navigation Bar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Quiz Progress -->
+    <div class="quiz-progress-container">
+        <div class="container">
+            <div class="quiz-progress">
+                <div class="progress-header">
+                    <div class="quiz-title-header">
+                        <div class="quiz-title-icon">
+                            <i class="bi bi-question-circle"></i>
+                        </div>
+                        <div class="quiz-title-text">
+                            <div class="quiz-title-main" th:text="${quiz.title}"></div>
+                            <div class="quiz-subtitle">
+                                <i class="bi bi-tag"></i>
+                                <span th:text="${quiz.category?.name} ?: 'Без категории'"></span>
+                                <i class="bi bi-dot"></i>
+                                <i class="bi bi-speedometer2"></i>
+                                <span th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
+                                      (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="quiz-progress-stats">
+                        <div class="progress-stat-item">
+                            <i class="bi bi-question-circle"></i>
+                            <span class="value" th:text="${questionNumber}"></span>
+                            <span class="label">из</span>
+                            <span class="value" th:text="${totalQuestions}"></span>
+                        </div>
+                        <div class="progress-stat-item">
+                            <i class="bi bi-clock"></i>
+                            <span class="value" id="globalTimeRemaining">
+                                <span th:text="${totalTimeRemaining}"></span>:00
+                            </span>
+                            <span class="label">мин</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress" style="height: 12px;">
+                        <div class="progress-bar bg-success"
+                             role="progressbar"
+                             th:classappend="${(questionNumber / totalQuestions) >= 0.75 ? 'progress-complete' :
+                             ((questionNumber / totalQuestions) >= 0.5 ? 'progress-high' :
+                             ((questionNumber / totalQuestions) >= 0.25 ? 'progress-medium' : 'progress-low'))}"
+                             th:attr="aria-valuenow=${(questionNumber / totalQuestions) * 100},
+                      aria-valuemin='0',
+                      aria-valuemax='100',
+                      data-target=${(questionNumber / totalQuestions) * 100}">
+                            <span class="progress-percentage">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Question Card -->
+                <div class="question-card">
+                    <!-- Question Header -->
+                    <div class="question-header">
+                        <div class="question-meta">
+                            <span class="badge bg-primary me-2">
+                                <i class="bi bi-clock me-1"></i>
+                                <span id="timeRemaining" th:text="${timeRemaining}"></span> сек
+                            </span>
+                            <span class="badge bg-success">
+                                <i class="bi bi-star me-1"></i>
+                                <span th:text="${question.points}"></span> баллов
+                            </span>
+                        </div>
+                        <div class="question-type-badge"
+                             th:classappend="${'type-' + question.type.name().toLowerCase()}"
+                             th:text="${question.type.name()} == 'SINGLE_CHOICE' ? 'Один вариант' :
+                                     (${question.type.name()} == 'MULTIPLE_CHOICE' ? 'Несколько вариантов' :
+                                     (${question.type.name()} == 'TRUE_FALSE' ? 'Правда/Ложь' : 'Текстовый ответ'))"></div>
+                    </div>
+
+                    <!-- Question Body -->
+                    <div class="question-body">
+                        <h3 class="question-text" th:text="${question.text}"></h3>
+
+                        <!-- Question Image (if exists) -->
+                        <div th:if="${question.imageUrl != null && !question.imageUrl.isEmpty()}"
+                             class="question-image-container mb-4">
+                            <img th:src="@{${question.imageUrl}}"
+                                 alt="Question image"
+                                 class="question-image img-fluid rounded">
+                        </div>
+
+                        <!-- Answer Form -->
+                        <form th:action="@{/quizzes/play/{quizId}/question/{questionNumber}(quizId=${quiz.id}, questionNumber=${questionNumber})}"
+                              method="post"
+                              id="answerForm">
+                            <input type="hidden" name="session" th:value="${gameSessionId}">
+
+                            <div class="answer-options">
+                                <!-- SINGLE CHOICE -->
+                                <div th:if="${question.type.name() == 'SINGLE_CHOICE'}"
+                                     class="single-choice-options">
+                                    <div th:each="option, iter : ${question.options}"
+                                         class="option-radio">
+                                        <input type="radio"
+                                               th:id="${'option' + iter.index}"
+                                               name="answer"
+                                               th:value="${iter.index}"
+                                               class="btn-check">
+                                        <label th:for="${'option' + iter.index}"
+                                               class="option-label btn btn-outline-primary">
+                                            <div class="option-content">
+                                                <!-- Option Image (if exists) -->
+                                                <div th:if="${question.optionsImage != null && question.optionsImage[iter.index] != null && !question.optionsImage[iter.index].isEmpty()}"
+                                                     class="option-image-container mb-2">
+                                                    <img th:src="@{${question.optionsImage[iter.index]}}"
+                                                         alt="Option image"
+                                                         class="option-image">
+                                                </div>
+                                                <!-- Option Text -->
+                                                <span class="option-text" th:text="${option}"></span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- MULTIPLE CHOICE -->
+                                <div th:if="${question.type.name() == 'MULTIPLE_CHOICE'}"
+                                     class="multiple-choice-options">
+                                    <div th:each="option, iter : ${question.options}"
+                                         class="option-checkbox">
+                                        <input type="checkbox"
+                                               th:id="${'option' + iter.index}"
+                                               th:name="${'answer_' + iter.index}"
+                                               th:value="${iter.index}"
+                                               class="btn-check">
+                                        <label th:for="${'option' + iter.index}"
+                                               class="option-label btn btn-outline-primary">
+                                            <div class="option-content">
+                                                <!-- Option Image (if exists) -->
+                                                <div th:if="${question.optionsImage != null && question.optionsImage[iter.index] != null && !question.optionsImage[iter.index].isEmpty()}"
+                                                     class="option-image-container mb-2">
+                                                    <img th:src="@{${question.optionsImage[iter.index]}}"
+                                                         alt="Option image"
+                                                         class="option-image">
+                                                </div>
+                                                <!-- Option Text -->
+                                                <span class="option-text" th:text="${option}"></span>
+                                            </div>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- TRUE FALSE -->
+                                <div th:if="${question.type.name() == 'TRUE_FALSE'}"
+                                     class="true-false-options">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="option-radio">
+                                                <input type="radio"
+                                                       id="trueOption"
+                                                       name="answer"
+                                                       value="true"
+                                                       class="btn-check">
+                                                <label for="trueOption"
+                                                       class="option-label btn btn-outline-success w-100 py-3">
+                                                    <i class="bi bi-check-circle me-2"></i>
+                                                    <span class="option-text">Правда</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="option-radio">
+                                                <input type="radio"
+                                                       id="falseOption"
+                                                       name="answer"
+                                                       value="false"
+                                                       class="btn-check">
+                                                <label for="falseOption"
+                                                       class="option-label btn btn-outline-danger w-100 py-3">
+                                                    <i class="bi bi-x-circle me-2"></i>
+                                                    <span class="option-text">Ложь</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- TEXT ANSWER -->
+                                <div th:if="${question.type.name() == 'TEXT_INPUT'}"
+                                     class="text-answer-option">
+                                    <div class="mb-3">
+                                        <label for="textAnswer" class="form-label">Ваш ответ:</label>
+                                        <input type="text"
+                                               id="textAnswer"
+                                               name="textAnswer"
+                                               class="form-control form-control-lg"
+                                               placeholder="Введите ответ..."
+                                               required>
+                                        <div class="form-text" th:if="${question.caseSensitive != null && question.caseSensitive}">
+                                            <i class="bi bi-exclamation-triangle me-1"></i>
+                                            Регистр имеет значение
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="question-actions mt-4">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <!-- Skip Button как обычная кнопка, которая отправляет специальное поле -->
+                                        <button type="submit" name="action" value="skip" class="btn btn-outline-secondary w-100">
+                                            <i class="bi bi-skip-forward me-2"></i>Пропустить
+                                        </button>
+                                    </div>
+                                    <div class="col-6">
+                                        <!-- Submit Button -->
+                                        <button type="submit" name="action" value="answer" class="btn btn-primary w-100" id="submitBtn">
+                                            <i class="bi bi-send me-2"></i>Ответить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Quiz Info -->
+                <div class="quiz-info-card mt-4">
+                    <div class="quiz-info-header">
+                        <h5 class="mb-0">Информация о викторине</h5>
+                    </div>
+                    <div class="quiz-info-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <i class="bi bi-tag me-2"></i>
+                                    <span>Категория:</span>
+                                    <strong th:text="${quiz.category?.name} ?: 'Без категории'"></strong>
+                                </div>
+                                <div class="info-item">
+                                    <i class="bi bi-speedometer2 me-2"></i>
+                                    <span>Сложность:</span>
+                                    <strong th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
+                                                  (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <i class="bi bi-question-circle me-2"></i>
+                                    <span>Вопросов:</span>
+                                    <strong th:text="${totalQuestions}"></strong>
+                                </div>
+                                <div class="info-item">
+                                    <i class="bi bi-clock me-2"></i>
+                                    <span>Время:</span>
+                                    <strong th:text="${quiz.timeLimitMinutes}"></strong> мин
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- JavaScript for Timer -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Timer functionality
+        const timeRemainingElement = document.getElementById('timeRemaining');
+        let timeRemaining = parseInt(timeRemainingElement.textContent);
+        let isSubmitting = false;
+
+        const timer = setInterval(function() {
+            if (isSubmitting) {
+                clearInterval(timer);
+                return;
+            }
+
+            timeRemaining--;
+            timeRemainingElement.textContent = timeRemaining;
+
+            // Update color based on remaining time
+            if (timeRemaining <= 10) {
+                timeRemainingElement.parentElement.classList.remove('bg-primary');
+                timeRemainingElement.parentElement.classList.add('bg-danger');
+            }
+
+            if (timeRemaining <= 0) {
+                clearInterval(timer);
+                isSubmitting = true;
+                // Auto-submit form when time runs out
+                document.getElementById('answerForm').submit();
+            }
+        }, 1000);
+
+        // Prevent form submission if no answer selected (except for skip)
+        const form = document.getElementById('answerForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // Если нажата кнопка "Пропустить", ничего не проверяем
+                const submitter = e.submitter;
+                if (submitter && submitter.name === 'action' && submitter.value === 'skip') {
+                    isSubmitting = true;
+                    if (window.globalTimer) {
+                        clearInterval(window.globalTimer);
+                    }
+                    return true;
+                }
+
+                // Если нажата кнопка "Ответить", проверяем выбор
+                const questionType = '[[${question.type.name()}]]';
+                let isValid = true;
+
+                if (questionType === 'SINGLE_CHOICE' || questionType === 'TRUE_FALSE') {
+                    const selected = document.querySelector('input[type="radio"]:checked');
+                    if (!selected) {
+                        e.preventDefault();
+                        alert('Пожалуйста, выберите ответ');
+                        isValid = false;
+                    }
+                }
+
+                if (questionType === 'TEXT_INPUT') {
+                    const textAnswer = document.getElementById('textAnswer');
+                    if (!textAnswer.value.trim()) {
+                        e.preventDefault();
+                        alert('Пожалуйста, введите ответ');
+                        textAnswer.focus();
+                        isValid = false;
+                    }
+                }
+
+                if (isValid) {
+                    isSubmitting = true;
+                    if (window.globalTimer) {
+                        clearInterval(window.globalTimer);
+                    }
+                }
+
+                return isValid;
+            });
+        }
+
+        // Убираем предупреждение при отправке формы
+        window.addEventListener('beforeunload', function(e) {
+            if (timeRemaining > 0 && !isSubmitting) {
+                e.preventDefault();
+                e.returnValue = 'Вы уверены, что хотите покинуть страницу? Прогресс будет потерян.';
+            }
+        });
+
+        // ANIMATE PROGRESS BAR
+        const progressBar = document.querySelector('.progress-bar');
+        const progressPercentage = document.querySelector('.progress-percentage');
+
+        if (progressBar) {
+            // Get current progress from Thymeleaf
+            const questionNumber = parseInt('[[${questionNumber}]]');
+            const totalQuestions = parseInt('[[${totalQuestions}]]');
+            const targetPercentage = (questionNumber / totalQuestions) * 100;
+
+            // Reset to 0 and animate to target
+            progressBar.style.width = '0%';
+            progressPercentage.textContent = '0%';
+
+            // Calculate animation duration based on target percentage
+            const animationDuration = Math.min(800, targetPercentage * 8); // Max 800ms
+
+            // Animate progress bar
+            let currentPercentage = 0;
+            const increment = targetPercentage / (animationDuration / 16); // 60fps
+
+            const progressAnimation = setInterval(() => {
+                currentPercentage += increment;
+                if (currentPercentage >= targetPercentage) {
+                    currentPercentage = targetPercentage;
+                    clearInterval(progressAnimation);
+                }
+
+                progressBar.style.width = currentPercentage + '%';
+                progressPercentage.textContent = Math.round(currentPercentage) + '%';
+                progressBar.setAttribute('aria-valuenow', Math.round(currentPercentage));
+            }, 16);
+        }
+
+        // Update global timer
+        const globalTimeElement = document.getElementById('globalTimeRemaining');
+        if (globalTimeElement) {
+            // Парсим начальное время
+            const timeText = globalTimeElement.textContent.trim();
+            const [minutes, seconds] = timeText.split(':').map(num => parseInt(num) || 0);
+
+            let totalSeconds = minutes * 60 + seconds;
+
+            const globalTimer = setInterval(() => {
+                if (totalSeconds <= 0 || isSubmitting) {
+                    clearInterval(globalTimer);
+                    if (totalSeconds <= 0 && !isSubmitting) {
+                        // Время вышло, отправляем форму
+                        isSubmitting = true;
+                        document.getElementById('answerForm').submit();
+                    }
+                    return;
+                }
+
+                totalSeconds--;
+
+                const displayMinutes = Math.floor(totalSeconds / 60);
+                const displaySeconds = totalSeconds % 60;
+
+                globalTimeElement.innerHTML = `${displayMinutes}:${displaySeconds < 10 ? '0' : ''}${displaySeconds}`;
+
+                // Меняем цвет при малом остатке времени
+                if (totalSeconds <= 60) {
+                    globalTimeElement.style.color = '#dc3545';
+                    globalTimeElement.style.fontWeight = 'bold';
+                } else if (totalSeconds <= 300) { // Меньше 5 минут
+                    globalTimeElement.style.color = '#ffc107';
+                }
+
+            }, 1000);
+
+            window.globalTimer = globalTimer;
+        }
+    });
+</script>
+</body>
+</html>
