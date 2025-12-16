@@ -324,12 +324,11 @@ public class QuizController {
             Pageable pageable = PageRequest.of(page, size, getSort(sort));
             Page<Quiz> quizzesPage;
 
-            // Parse filter parameters - делаем их финальными
             final List<Long> selectedCategoryIds = new ArrayList<>();
             if (categories != null && !categories.isEmpty()) {
                 selectedCategoryIds.addAll(Arrays.stream(categories.split(","))
                         .map(Long::parseLong)
-                        .collect(Collectors.toList()));
+                        .toList());
             }
 
             final List<DifficultyLevel> selectedDifficultyLevels = new ArrayList<>();
@@ -337,9 +336,8 @@ public class QuizController {
                 try {
                     selectedDifficultyLevels.addAll(Arrays.stream(difficulty.split(","))
                             .map(d -> DifficultyLevel.valueOf(d.toUpperCase()))
-                            .collect(Collectors.toList()));
+                            .toList());
                 } catch (IllegalArgumentException e) {
-                    // Invalid difficulty value, ignore
                     System.err.println("Invalid difficulty value: " + difficulty);
                 }
             }
@@ -350,11 +348,11 @@ public class QuizController {
 
             // Если выбрана категория, но нет викторин - показываем сообщение
             if (hasCategoryFilter && selectedCategoryIds.size() == 1) {
-                Category category = categoryService.getCategoryById(selectedCategoryIds.get(0));
+                Category category = categoryService.getCategoryById(selectedCategoryIds.getFirst());
                 model.addAttribute("selectedCategory", category);
 
                 // Проверяем, есть ли публичные викторины в этой категории
-                boolean hasQuizzesInCategory = quizService.existsByCategoryIdAndPublicTrue(selectedCategoryIds.get(0));
+                boolean hasQuizzesInCategory = quizService.existsByCategoryIdAndPublicTrue(selectedCategoryIds.getFirst());
                 model.addAttribute("hasQuizzesInCategory", hasQuizzesInCategory);
 
                 // Если нет викторин и это единственный фильтр, показываем сообщение
@@ -375,16 +373,14 @@ public class QuizController {
                 }
             }
 
-            // Apply search filter if present
             if (search != null && !search.trim().isEmpty()) {
-                // Если есть поисковый запрос, используем searchPublicQuizzes
+                // Если есть поисковый запрос
                 quizzesPage = quizService.searchPublicQuizzes(search, pageable);
 
-                // Затем применяем другие фильтры вручную
+                // применяем другие фильтры вручную
                 if (!selectedCategoryIds.isEmpty() || !selectedDifficultyLevels.isEmpty()) {
                     List<Quiz> filteredQuizzes = quizzesPage.getContent().stream()
                             .filter(quiz -> {
-                                // Apply category filter if selected
                                 if (!selectedCategoryIds.isEmpty()) {
                                     if (quiz.getCategory() == null) return false;
                                     return selectedCategoryIds.contains(quiz.getCategory().getId());
@@ -392,7 +388,6 @@ public class QuizController {
                                 return true;
                             })
                             .filter(quiz -> {
-                                // Apply difficulty filter if selected
                                 if (!selectedDifficultyLevels.isEmpty()) {
                                     return selectedDifficultyLevels.contains(quiz.getDifficultyLevel());
                                 }
@@ -400,7 +395,6 @@ public class QuizController {
                             })
                             .collect(Collectors.toList());
 
-                    // Create a custom page
                     int start = (int) pageable.getOffset();
                     int end = Math.min((start + pageable.getPageSize()), filteredQuizzes.size());
 
@@ -420,12 +414,11 @@ public class QuizController {
                 }
             } else if (!selectedCategoryIds.isEmpty() || !selectedDifficultyLevels.isEmpty()) {
                 // Если есть фильтры категорий или сложности (но нет поиска)
-                // Более эффективный подход - использовать существующие методы по очереди
 
                 if (!selectedCategoryIds.isEmpty() && !selectedDifficultyLevels.isEmpty()) {
                     // И категории, и сложности - нужно фильтровать вручную
                     Page<Quiz> publicQuizzes = quizService.findPublicQuizzes(
-                            PageRequest.of(0, 1000, getSort(sort))); // Большая страница для фильтрации
+                            PageRequest.of(0, 1000, getSort(sort)));
 
                     List<Quiz> filteredQuizzes = publicQuizzes.getContent().stream()
                             .filter(quiz -> {
@@ -443,7 +436,7 @@ public class QuizController {
                             })
                             .collect(Collectors.toList());
 
-                    // Применяем пагинацию
+                    // пагинация
                     int start = (int) pageable.getOffset();
                     int end = Math.min((start + pageable.getPageSize()), filteredQuizzes.size());
 
@@ -465,9 +458,9 @@ public class QuizController {
                     if (selectedCategoryIds.size() == 1) {
                         // Одна категория
                         quizzesPage = quizService.findPublicQuizzesByCategory(
-                                selectedCategoryIds.get(0), pageable);
+                                selectedCategoryIds.getFirst(), pageable);
                     } else {
-                        // Несколько категорий - используем специальный метод
+                        // Несколько категорий
                         quizzesPage = quizService.findPublicQuizzesByCategories(selectedCategoryIds, pageable);
                     }
                 } else {
@@ -475,9 +468,9 @@ public class QuizController {
                     if (selectedDifficultyLevels.size() == 1) {
                         // Один уровень сложности
                         quizzesPage = quizService.findPublicQuizzesByDifficulty(
-                                selectedDifficultyLevels.get(0), pageable);
+                                selectedDifficultyLevels.getFirst(), pageable);
                     } else {
-                        // Несколько уровней сложности - фильтруем вручную
+                        // Несколько уровней сложности
                         Page<Quiz> publicQuizzes = quizService.findPublicQuizzes(
                                 PageRequest.of(0, 1000, getSort(sort)));
 
@@ -560,7 +553,7 @@ public class QuizController {
                     message = "По вашему запросу с выбранным уровнем сложности викторин не найдено";
                 } else if (hasCategoryFilter) {
                     if (selectedCategoryIds.size() == 1) {
-                        Category category = categoryService.getCategoryById(selectedCategoryIds.get(0));
+                        Category category = categoryService.getCategoryById(selectedCategoryIds.getFirst());
                         message = "В категории \"" + category.getName() + "\" викторин пока нет";
                     } else {
                         message = "В выбранных категориях викторин пока нет";
@@ -647,9 +640,6 @@ public class QuizController {
         }
     }
 
-
-
-
     // метод для преобразования Quiz в UpdateQuizDto
     private UpdateQuizDto convertToUpdateDto(Quiz quiz) {
         UpdateQuizDto dto = new UpdateQuizDto();
@@ -713,10 +703,10 @@ public class QuizController {
         question.setPoints(100);
         question.setTimeLimitSeconds(30);
 
-        // 2 ПУСТЫХ варианта ответа по умолчанию
+        // 2 пустых варианта ответа по умолчанию
         List<String> options = new ArrayList<>();
-        options.add("");  // ПУСТАЯ строка вместо "Вариант 1"
-        options.add("");  // ПУСТАЯ строка вместо "Вариант 2"
+        options.add("");
+        options.add("");
         question.setOptions(options);
 
         // Пустые изображения для вариантов

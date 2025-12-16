@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.util.List;
+import java.util.Optional;
 
 public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
@@ -58,7 +59,7 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
             @Param("difficulties") List<DifficultyLevel> difficulties,
             Pageable pageable);
 
-    // Новые методы для проверки существования викторин
+    // методы для проверки существования викторин
     @Query("SELECT COUNT(q) > 0 FROM Quiz q WHERE q.category.id = :categoryId AND q.isPublic = true")
     boolean existsByCategoryIdAndPublicTrue(@Param("categoryId") Long categoryId);
 
@@ -67,4 +68,11 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
 
     @Query("SELECT COUNT(q) > 0 FROM Quiz q WHERE q.category.id IN :categoryIds AND q.isPublic = true")
     boolean existsByCategoryIdsAndPublicTrue(@Param("categoryIds") List<Long> categoryIds);
+
+    @Query("SELECT DISTINCT q FROM Quiz q " +
+            "LEFT JOIN FETCH q.questions " +
+            "LEFT JOIN FETCH q.creator " +
+            "LEFT JOIN FETCH q.category " +
+            "WHERE q.id = :id AND q.isPublic = true")
+    Optional<Quiz> findByIdWithQuestions(@Param("id") Long id);
 }

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="'Результаты | ' + ${quiz.title}">Результаты викторины</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+    <!-- Custom CSS -->
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+    <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
+</head>
+<body>
+
+<div class="results-container">
+    <!-- Navigation Bar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Results Header -->
+    <div class="results-header">
+        <div class="container">
+            <div class="results-header-content">
+                <h1 class="results-title" th:text="${quiz.title}"></h1>
+                <p class="results-subtitle">Результаты прохождения</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Results -->
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <!-- Results Card -->
+                <div class="results-card">
+                    <!-- Result Message -->
+                    <div class="result-message text-center mb-5">
+                        <div class="result-icon">
+                            <i th:if="${percentage >= 80}" class="bi bi-trophy text-warning"></i>
+                            <i th:if="${percentage >= 50 && percentage < 80}" class="bi bi-star text-primary"></i>
+                            <i th:if="${percentage < 50}" class="bi bi-emoji-smile text-success"></i>
+                        </div>
+                        <h2 class="result-title" th:text="${resultMessage}"></h2>
+                    </div>
+
+                    <!-- Score Summary -->
+                    <div class="score-summary mb-5">
+                        <div class="row text-center">
+                            <div class="col-md-3 col-6 mb-4">
+                                <div class="score-item">
+                                    <div class="score-value text-success" th:text="${correctAnswers}">0</div>
+                                    <div class="score-label">Правильных</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-4">
+                                <div class="score-item">
+                                    <div class="score-value text-danger" th:text="${incorrectAnswers}">0</div>
+                                    <div class="score-label">Неправильных</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-4">
+                                <div class="score-item">
+                                    <div class="score-value text-primary" th:text="${totalScore}">0</div>
+                                    <div class="score-label">Баллов</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3 col-6 mb-4">
+                                <div class="score-item">
+                                    <div class="score-value" th:text="${percentage} + '%'">0%</div>
+                                    <div class="score-label">Точность</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="accuracy-progress mb-4">
+                            <div class="progress-label d-flex justify-content-between mb-2">
+                                <span>Точность ответов</span>
+                                <span th:text="${percentage} + '%'"></span>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-success"
+                                     role="progressbar"
+                                     th:style="'width: ' + ${percentage} + '%;'"
+                                     th:aria-valuenow="${percentage}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Score Progress -->
+                        <div class="score-progress mb-4">
+                            <div class="progress-label d-flex justify-content-between mb-2">
+                                <span>Набрано баллов</span>
+                                <span th:text="${totalScore} + ' / ' + ${maxPossibleScore}"></span>
+                            </div>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar bg-primary"
+                                     role="progressbar"
+                                     th:style="'width: ' + ${scorePercentage} + '%;'"
+                                     th:aria-valuenow="${scorePercentage}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Answer Review (Optional) -->
+                    <div th:if="${answerHistory != null && !answerHistory.isEmpty()}"
+                         class="answer-review mb-5">
+                        <h4 class="section-title mb-4">
+                            <i class="bi bi-list-check me-2"></i>Детали ответов
+                        </h4>
+
+                        <div class="answer-history">
+                            <div th:each="entry : ${answerHistory.entrySet()}"
+                                 class="answer-item mb-3">
+                                <div class="answer-item-header">
+                                    <span class="question-number">Вопрос <span th:text="${entry.key}"></span></span>
+                                    <span th:if="${entry.value.correct}"
+                                          class="answer-status correct">
+                                        <i class="bi bi-check-circle me-1"></i>Правильно
+                                    </span>
+                                    <span th:unless="${entry.value.correct}"
+                                          class="answer-status incorrect">
+                                        <i class="bi bi-x-circle me-1"></i>Неправильно
+                                    </span>
+                                </div>
+                                <div class="answer-item-body">
+                                    <small class="text-muted">Баллы:
+                                        <span th:text="${entry.value.pointsEarned}"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a th:href="@{/quizzes/play/{id}(id=${quiz.id})}"
+                                   class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-arrow-repeat me-2"></i>Повторить
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a th:href="@{/quizzes/details/{id}(id=${quiz.id})}"
+                                   class="btn btn-outline-secondary w-100">
+                                    <i class="bi bi-info-circle me-2"></i>Подробнее
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <a th:href="@{/quizzes}"
+                                   class="btn btn-primary w-100">
+                                    <i class="bi bi-grid me-2"></i>Все викторины
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Statistics -->
+                <div class="quiz-statistics mt-5">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-graph-up"></i>
+                                    </div>
+                                    <h5 class="stat-title">Статистика викторины</h5>
+                                </div>
+                                <div class="stat-card-body">
+                                    <div class="creator-stats">
+                                        <div class="stat-item">
+                                            <span>Всего прохождений:</span>
+                                            <strong th:text="${quiz.playsCount}"></strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>Средний рейтинг:</span>
+                                            <strong th:text="${quiz.averageRating} != null ? ${quiz.averageRating} + '/5' : 'Нет оценок'"></strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>Оценок:</span>
+                                            <strong th:text="${quiz.ratingCounts}"></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <div class="stat-card">
+                                <div class="stat-card-header">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <h5 class="stat-title">Создатель</h5>
+                                </div>
+                                <div class="stat-card-body">
+                                    <!-- Блок с информацией о создателе -->
+                                    <div class="creator-mini">
+                                        <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
+                                             alt="Creator"
+                                             class="creator-avatar-mini">
+                                        <div class="creator-info">
+                                            <div class="creator-name"
+                                                 th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></div>
+                                            <small class="text-muted">@<span th:text="${quiz.creator.username}"></span></small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Статистика создателя -->
+                                    <div class="creator-stats">
+                                        <div class="stat-item">
+                                            <span>Создано викторин:</span>
+                                            <strong th:text="${quiz.creator.statistic?.totalQuizzesCreated ?: 0}"></strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>Рейтинг:</span>
+                                            <strong th:text="${quiz.creator.statistic?.averageScore ?: 0}"></strong>
+                                        </div>
+                                        <div class="stat-item">
+                                            <span>Общий рейтинг:</span>
+                                            <strong th:text="${quiz.creator.statistic?.totalScore ?: 0}"></strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <!-- Footer content (same as in quizzes.html) -->
+            <div th:replace="~{fragments/footer :: footer}"></div>
+        </div>
+    </footer>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+</body>
+</html>

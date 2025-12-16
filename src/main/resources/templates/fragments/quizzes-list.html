@@ -90,21 +90,29 @@
                     </div>
                 </div>
             </div>
+
             <div class="quiz-footer">
-                <a th:href="@{/quiz/play/{id}(id=${quiz.id})}" class="btn btn-primary btn-sm mb-2" th:if="${#authorization.expression('isAuthenticated()')}">
-                    <i class="bi bi-play-fill me-1"></i>Играть
-                </a>
-                <a th:href="@{/quiz/view/{id}(id=${quiz.id})}" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-info-circle me-1"></i>Подробнее
-                </a>
+                <div class="d-grid gap-2">
+                    <a th:href="@{/quizzes/play/{id}(id=${quiz.id})}"
+                       class="btn btn-primary btn-sm"
+                       th:if="${#authorization.expression('isAuthenticated()')}">
+                        <i class="bi bi-play-fill me-1"></i>Играть
+                    </a>
+                    <a th:href="@{/quizzes/details/{id}(id=${quiz.id})}"
+                       class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-info-circle me-1"></i>Подробнее
+                    </a>
+                </div>
                 <div class="quiz-meta mt-3">
                     <div class="quiz-author">
                         <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
-                             alt="Author"
+                             alt="Creator"
                              class="author-avatar">
                         <div>
-                            <div class="author-name" th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></div>
-                            <small>Создатель</small>
+                            <div class="author-name"
+                                 th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}">
+                            </div>
+                            <small class="text-muted">Создатель</small>
                         </div>
                     </div>
                 </div>
