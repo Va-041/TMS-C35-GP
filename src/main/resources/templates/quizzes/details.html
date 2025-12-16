@@ -1,0 +1,232 @@
+    <!DOCTYPE html>
+    <html xmlns:th="http://www.thymeleaf.org" lang="ru">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title th:text="${quiz.title} + ' | FunQuizzes'">Детали викторины</title>
+
+        <!-- Bootstrap 5 CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+        <!-- Bootstrap Icons -->
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+
+        <!-- Custom CSS -->
+        <link th:href="@{/css/index-style.css}" rel="stylesheet">
+        <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+        <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
+    </head>
+    <body>
+
+    <!-- Navigation Bar -->
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Quiz Details -->
+    <div class="details-container">
+        <div class="container py-5">
+            <!-- Back Button -->
+            <div class="mb-4">
+                <a th:href="@{/quizzes}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-2"></i>Вернуться к викторинам
+                </a>
+            </div>
+
+            <!-- Quiz Header -->
+            <div class="quiz-detail-header mb-5">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="quiz-category-badge" th:text="${quiz.category?.name} ?: 'Без категории'"></span>
+                            <span th:classappend="${'quiz-difficulty-badge ' + quiz.difficultyLevel.name().toLowerCase()}"
+                                  th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
+                                  (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"
+                                  class="ms-3"></span>
+                        </div>
+
+                        <h1 class="quiz-detail-title" th:text="${quiz.title}"></h1>
+                        <p class="quiz-detail-description" th:text="${quiz.description}"></p>
+
+                        <!-- Quiz Stats -->
+                        <div class="quiz-stats mt-4">
+                            <div class="row">
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-play-circle"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <div class="stat-value" th:text="${quiz.playsCount}">0</div>
+                                            <div class="stat-label">Прохождений</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-star"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <div class="stat-value" th:text="${quiz.averageRating != null ? quiz.averageRating : '0.0'}">0.0</div>
+                                            <div class="stat-label">Рейтинг</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-clock"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <div class="stat-value" th:text="${totalTime}">10</div>
+                                            <div class="stat-label">Минут</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3 col-6 mb-3">
+                                    <div class="stat-item">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-question-circle"></i>
+                                        </div>
+                                        <div class="stat-info">
+                                            <div class="stat-value" th:text="${questions.size()}">10</div>
+                                            <div class="stat-label">Вопросов</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4">
+                        <!-- Creator Info -->
+                        <div class="creator-card">
+                            <div class="creator-header">
+                                <h4 class="creator-title">Создатель</h4>
+                            </div>
+                            <div class="creator-body">
+                                <div class="d-flex align-items-center">
+                                    <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
+                                         alt="Creator Avatar"
+                                         class="creator-avatar">
+                                    <div class="ms-3">
+                                        <h5 class="creator-name mb-1" th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></h5>
+                                        <p class="creator-username text-muted mb-0">@<span th:text="${quiz.creator.username}"></span></p>
+                                    </div>
+                                </div>
+
+                                <!-- Creator Stats -->
+                                <div class="creator-stats mt-3">
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <small class="text-muted">Создано викторин:</small>
+                                            <div class="fw-bold" th:text="${quiz.creator.statistic?.totalQuizzesCreated ?: 0}">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted">Рейтинг:</small>
+                                            <div class="fw-bold" th:text="${quiz.creator.statistic?.averageScore ?: 0}">0</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Play Button -->
+                        <div class="play-button-container mt-4">
+                            <a th:href="@{/quizzes/play/{id}(id=${quiz.id})}"
+                               class="btn btn-primary btn-play btn-lg w-100">
+                                <i class="bi bi-play-fill me-2"></i>Начать игру
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Features Section -->
+            <div class="features-grid mb-5">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-clock"></i>
+                    </div>
+                    <h4 class="feature-title">Таймер</h4>
+                    <p class="feature-description">
+                        Ограниченное время на каждый вопрос подогревает азарт
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <h4 class="feature-title">Рейтинг</h4>
+                    <p class="feature-description">
+                        Повышайте свой рейтинг, правильно отвечая на вопросы
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-trophy"></i>
+                    </div>
+                    <h4 class="feature-title">Достижения</h4>
+                    <p class="feature-description">
+                        Получайте награды за особые успехи в викторине
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="bi bi-graph-up"></i>
+                    </div>
+                    <h4 class="feature-title">Прогресс</h4>
+                    <p class="feature-description">
+                        Следите за своим развитием в статистике
+                    </p>
+                </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div class="cta-section">
+                <div class="cta-icon">
+                    <i class="bi bi-play-fill"></i>
+                </div>
+                <h3 class="cta-title">Готовы к вызову?</h3>
+                <p class="cta-description">
+                    Присоединяйтесь к тысячам игроков, которые уже прошли эту викторину.
+                    Проверьте свои знания и соревнуйтесь за топовые позиции в рейтинге!
+                </p>
+                <div class="difficulty-meter">
+                    <div class="meter-header">
+                        <span class="meter-label">Сложность викторины</span>
+                        <span class="meter-value" th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
+                      (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></span>
+                    </div>
+                    <div class="meter-bar">
+                        <div th:classappend="${'meter-fill ' + quiz.difficultyLevel.name().toLowerCase()}"></div>
+                    </div>
+                    <div class="meter-labels">
+                        <span>Легко</span>
+                        <span>Средне</span>
+                        <span>Сложно</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container">
+                <div th:replace="~{fragments/footer :: footer}"></div>
+            </div>
+        </footer>
+
+    </div>
+
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    </body>
+    </html>

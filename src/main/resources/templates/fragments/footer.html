@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+<div th:fragment="footer">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="footer-brand">
+                <i class="bi bi-controller me-2"></i>
+                <span class="brand-text">Fun<span class="brand-highlight">Quizzes</span></span>
+            </div>
+            <p class="footer-about mt-3">
+                Платформа для интеллектуальных баталий.
+                Создавай викторины, бросай вызов друзьям, становись чемпионом!
+            </p>
+        </div>
+
+        <div class="col-lg-2 col-md-4 mb-4">
+            <h5 class="footer-heading">Навигация</h5>
+            <ul class="footer-links">
+                <li><a th:href="@{/}">Главная</a></li>
+                <li><a th:href="@{/quizzes}">Викторины</a></li>
+            </ul>
+        </div>
+
+        <div class="col-lg-2 col-md-4 mb-4">
+            <h5 class="footer-heading">Аккаунт</h5>
+            <ul class="footer-links">
+                <li><a th:href="@{/users/log-in}" th:unless="${#authorization.expression('isAuthenticated()')}">Вход</a></li>
+                <li><a th:href="@{/users/sing-up}" th:unless="${#authorization.expression('isAuthenticated()')}">Регистрация</a></li>
+                <li><a th:href="@{/users/profile}" th:if="${#authorization.expression('isAuthenticated()')}">Профиль</a></li>
+                <li><a th:href="@{/quizzes/my}" th:if="${#authorization.expression('isAuthenticated()')}">Мои викторины</a></li>
+                <li><a th:href="@{/quizzes/create}" th:if="${#authorization.expression('isAuthenticated()')}">Создать викторину</a></li>
+            </ul>
+        </div>
+
+        <div class="col-lg-4 col-md-4 mb-4">
+            <h5 class="footer-heading">Контакты</h5>
+            <ul class="footer-contact">
+                <li><i class="bi bi-envelope"></i> support@funquizzes.com</li>
+                <li><i class="bi bi-telephone"></i> +375 (29) 123-45-67</li>
+                <li><i class="bi bi-geo-alt"></i> Брест, Беларусь</li>
+            </ul>
+            <div class="footer-social mt-4">
+                <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
+                <a href="#" class="social-link"><i class="bi bi-telegram"></i></a>
+                <a href="#" class="social-link"><i class="bi bi-meta"></i></a>
+                <a href="#" class="social-link"><i class="bi bi-github"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <hr class="footer-divider my-4">
+
+    <div class="footer-bottom">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <p class="mb-0">&copy; 2025 FunQuizzes. Все права защищены.</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <a href="#" class="footer-link me-3">Политика</a>
+                <a href="#" class="footer-link">Условия</a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

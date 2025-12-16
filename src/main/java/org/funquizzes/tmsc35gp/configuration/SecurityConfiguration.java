@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -24,8 +25,8 @@ public class SecurityConfiguration {
                                 "/users/log-in",
                                 "/users/profile/view/**", // публичные профили
                                 "/quizzes",
-                                "/quizzes/**",  // Просмотр викторин
-                                "/quiz/view/**", // Просмотр конкретной викторины
+                                "/quizzes/**",
+                                "/quizzes/details/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
@@ -41,7 +42,10 @@ public class SecurityConfiguration {
                                 "/quizzes/edit/**",
                                 "/quizzes/delete/**",
                                 "/quizzes/my",
-                                "/quiz/play/**"
+                                "/quizzes/play/**",
+                                "/quizzes/play/*/question/**",
+                                "/quizzes/play/*/skip/**",
+                                "/quizzes/play/*/results"
                         )
                         .authenticated()
                         // Остальные пути тоже требуют авторизации
@@ -56,6 +60,11 @@ public class SecurityConfiguration {
                         .logoutUrl("/users/logout")
                         .logoutSuccessUrl("/")
                         .permitAll())
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .invalidSessionUrl("/users/log-in?expired=true")
+                        .maximumSessions(1)
+                        .expiredUrl("/users/log-in?expired=true"))
                 .build();
     }
 

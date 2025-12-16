@@ -4,12 +4,17 @@ import org.funquizzes.tmsc35gp.dto.CreateQuestionDto;
 import org.funquizzes.tmsc35gp.entity.Question;
 import org.funquizzes.tmsc35gp.entity.QuestionType;
 import org.funquizzes.tmsc35gp.entity.Quiz;
+import org.funquizzes.tmsc35gp.repository.QuestionRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 public class QuestionService {
+
+    @Autowired
+    private QuestionRepository questionRepository;
 
     // создаём вопрос из DTO и связывает его с викториной
     public Question createQuestionFromDto(CreateQuestionDto dto, Quiz quiz) {
@@ -26,6 +31,10 @@ public class QuestionService {
         processQuestionOptions(question, dto);
 
         return question;
+    }
+
+    public List<Question> getQuestionsByQuizId(Long quizId) {
+        return questionRepository.findByQuizIdWithOptions(quizId);
     }
 
     // обработка вариантов ответов и правильных ответы в зависимости от типа вопроса
