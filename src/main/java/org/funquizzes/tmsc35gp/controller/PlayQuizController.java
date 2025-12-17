@@ -7,6 +7,7 @@ import org.funquizzes.tmsc35gp.service.QuestionService;
 import org.funquizzes.tmsc35gp.service.QuizService;
 import org.funquizzes.tmsc35gp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -37,13 +38,20 @@ public class PlayQuizController {
 
     // детали викторины
     @GetMapping("/details/{id}")
-    public String viewQuizFullDetails(@PathVariable Long id, Model model) {
+    public String viewQuizFullDetails(@PathVariable Long id,
+                                      Model model,
+                                      Authentication authentication) {
         try {
             Quiz quiz = quizService.getPublicQuizById(id);
 
             if (quiz == null) {
                 String encodedMessage = URLEncoder.encode("Викторина не найдена или недоступна", StandardCharsets.UTF_8);
                 return "redirect:/quizzes?message=" + encodedMessage;
+            }
+
+            if (authentication != null && authentication.isAuthenticated()) {
+                User currentUser = (User) userService.loadUserByUsername(authentication.getName());
+                model.addAttribute("currentUser", currentUser);
             }
 
             return getQuizDetailsPage(quiz, model);
@@ -274,11 +282,17 @@ public class PlayQuizController {
                               @RequestParam String session,
                               @RequestParam(required = false) String timeout,
                               Authentication authentication,
-                              Model model) {
+                              Model model,
+                              HttpServletRequest request) {
         try {
+            System.out.println("=== ПОКАЗ РЕЗУЛЬТАТОВ ===");
+            System.out.println("Quiz ID: " + quizId);
+            System.out.println("Session ID: " + session);
+
             GameSession gameSession = activeGameSessions.get(session);
 
             if (gameSession == null) {
+                System.out.println("Игровая сессия не найдена!");
                 String encodedMessage = URLEncoder.encode("Результаты не найдены", StandardCharsets.UTF_8);
                 return "redirect:/quizzes?message=" + encodedMessage;
             }
@@ -291,7 +305,7 @@ public class PlayQuizController {
             Quiz quiz = gameSession.getQuiz();
             List<Question> questions = quiz.getQuestions();
 
-            // Вычисляем итоговые результаты
+            // итоговые результаты
             int totalQuestions = questions.size();
             int correctAnswers = gameSession.getCorrectAnswersCount();
             int totalScore = gameSession.getTotalScore();
@@ -301,8 +315,14 @@ public class PlayQuizController {
             String username = authentication.getName();
             quizService.recordQuizPlay(username, totalScore, correctAnswers, totalQuestions);
             quizService.incrementPlaysCount(quizId);
-            // Очищаем сессию игры
-            activeGameSessions.remove(session);
+
+            // Устанавливаем флаг, что викторина только что завершена
+            request.getSession().setAttribute("quiz_completed_" + quizId, true);
+
+            // Передаем sessionId в модель для модального окна
+            model.addAttribute("sessionId", session);
+
+            System.out.println("Session ID передан в модель: " + session);
 
             // Подготавливаем модель для отображения результатов
             prepareResultsModel(model, quiz, gameSession, totalQuestions,
@@ -317,6 +337,47 @@ public class PlayQuizController {
         }
     }
 
+    @GetMapping("/check-completion/{quizId}")
+    @ResponseBody
+    public ResponseEntity<Map<String, Object>> checkQuizCompletion(
+            @PathVariable Long quizId,
+            Authentication authentication,
+            HttpServletRequest request) {
+
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            if (authentication == null || !authentication.isAuthenticated()) {
+                response.put("completed", false);
+                return ResponseEntity.ok(response);
+            }
+
+            String username = authentication.getName();
+            User user = (User) userService.loadUserByUsername(username);
+
+            // Проверяем, есть ли активная сессия для этой викторины
+            String sessionId = (String) request.getSession().getAttribute("gameSessionId");
+            if (sessionId != null) {
+                GameSession gameSession = activeGameSessions.get(sessionId);
+                if (gameSession != null && gameSession.getQuiz().getId().equals(quizId)) {
+                    // Проверяем, завершена ли викторина (есть ли результаты)
+                    boolean isCompleted = gameSession.getAnswerHistory() != null &&
+                            !gameSession.getAnswerHistory().isEmpty();
+                    response.put("completed", isCompleted);
+                    response.put("sessionId", sessionId);
+                    return ResponseEntity.ok(response);
+                }
+            }
+
+            response.put("completed", false);
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("completed", false);
+            return ResponseEntity.ok(response);
+        }
+    }
+
     // Вспомогательные методы
     private String getQuizDetailsPage(Quiz quiz, Model model) {
         // Собираем статистику викторины
@@ -327,10 +388,16 @@ public class PlayQuizController {
                 .sorted(Comparator.comparingInt(Question::getQuestionIndex))
                 .collect(Collectors.toList());
 
+        // Вычисляем общее время
+        int totalTime = quiz.getTimeLimitMinutes() != null ? quiz.getTimeLimitMinutes() :
+                (int) Math.ceil(sortedQuestions.stream()
+                        .mapToInt(q -> q.getTimeLimitSeconds() != null ? q.getTimeLimitSeconds() : 30)
+                        .sum() / 60.0);
+
         model.addAttribute("quiz", quiz);
         model.addAttribute("quizStats", quizStats);
         model.addAttribute("questions", sortedQuestions);
-        model.addAttribute("totalTime", quiz.getTimeLimitMinutes());
+        model.addAttribute("totalTime", totalTime);
 
         return "quizzes/details";
     }
@@ -625,6 +692,10 @@ public class PlayQuizController {
         public boolean isTotalTimeExpired() {
             return getRemainingTotalTimeMinutes() <= 0;
         }
+    }
+
+    public void cleanupGameSession(String sessionId) {
+        activeGameSessions.remove(sessionId);
     }
 
     // класс для хранения результата ответа

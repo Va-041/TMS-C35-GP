@@ -3,11 +3,17 @@ package org.funquizzes.tmsc35gp.controller;
 import org.funquizzes.tmsc35gp.dto.ChangePasswordDto;
 import org.funquizzes.tmsc35gp.dto.UpdateProfileDto;
 import org.funquizzes.tmsc35gp.entity.Quiz;
+import org.funquizzes.tmsc35gp.entity.QuizRating;
 import org.funquizzes.tmsc35gp.entity.User;
 import org.funquizzes.tmsc35gp.entity.UserStatistic;
+import org.funquizzes.tmsc35gp.service.QuizRatingService;
 import org.funquizzes.tmsc35gp.service.QuizService;
 import org.funquizzes.tmsc35gp.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -23,9 +29,10 @@ public class ProfileController {
 
     @Autowired
     private UserService userService;
-
     @Autowired
     private QuizService quizService;
+    @Autowired
+    private QuizRatingService quizRatingService;
 
 
     @GetMapping
@@ -37,7 +44,9 @@ public class ProfileController {
     public String profileMain(Authentication authentication,
                               Model model,
                               @RequestParam(defaultValue = "overview") String tab,
-                              @RequestParam(required = false) String message) {
+                              @RequestParam(required = false) String message,
+                              @RequestParam(defaultValue = "0") int page,
+                              @RequestParam(defaultValue = "10") int size) {
 
         User user = (User) userService.loadUserByUsername(authentication.getName());
 
@@ -95,7 +104,15 @@ public class ProfileController {
                 break;
 
             case "activity":
-                // Логика для активности
+                // загружаем оценки пользователя
+                Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+                Page<QuizRating> ratingsPage = quizRatingService.getUserRatings(user, pageable);
+
+                model.addAttribute("ratings", ratingsPage.getContent());
+                model.addAttribute("totalPages", ratingsPage.getTotalPages());
+                model.addAttribute("currentPage", page);
+                model.addAttribute("totalRatings", ratingsPage.getTotalElements());
+                model.addAttribute("hasRatings", !ratingsPage.isEmpty());
                 break;
 
             case "game-history":

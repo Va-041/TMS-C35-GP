@@ -1,232 +1,764 @@
-    <!DOCTYPE html>
-    <html xmlns:th="http://www.thymeleaf.org" lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title th:text="${quiz.title} + ' | FunQuizzes'">Детали викторины</title>
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${quiz.title} + ' | FunQuizzes'">Детали викторины</title>
 
-        <!-- Bootstrap 5 CSS -->
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-        <!-- Bootstrap Icons -->
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 
-        <!-- Custom CSS -->
-        <link th:href="@{/css/index-style.css}" rel="stylesheet">
-        <link th:href="@{/css/profile-style.css}" rel="stylesheet">
-        <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
-    </head>
-    <body>
+    <!-- Custom CSS -->
+    <link th:href="@{/css/index-style.css}" rel="stylesheet">
+    <link th:href="@{/css/profile-style.css}" rel="stylesheet">
+    <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
+    <link th:href="@{/css/rating-style.css}" rel="stylesheet">
 
-    <!-- Navigation Bar -->
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+    <!-- CSRF Token -->
+    <meta th:if="${_csrf}" name="_csrf" th:content="${_csrf.token}">
+    <meta th:if="${_csrf}" name="_csrf_header" th:content="${_csrf.headerName}">
+</head>
+<body>
 
-    <!-- Quiz Details -->
-    <div class="details-container">
-        <div class="container py-5">
-            <!-- Back Button -->
-            <div class="mb-4">
-                <a th:href="@{/quizzes}" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Вернуться к викторинам
-                </a>
-            </div>
+<!-- Navigation Bar -->
+<div th:replace="~{fragments/navbar :: navbar}"></div>
 
-            <!-- Quiz Header -->
-            <div class="quiz-detail-header mb-5">
-                <div class="row">
-                    <div class="col-lg-8">
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="quiz-category-badge" th:text="${quiz.category?.name} ?: 'Без категории'"></span>
-                            <span th:classappend="${'quiz-difficulty-badge ' + quiz.difficultyLevel.name().toLowerCase()}"
-                                  th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
-                                  (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"
-                                  class="ms-3"></span>
+<!-- Quiz Details -->
+<div class="details-container">
+    <div class="container py-5">
+        <!-- Back Button -->
+        <div class="mb-4">
+            <a th:href="@{/quizzes}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Вернуться к викторинам
+            </a>
+        </div>
+
+        <!-- Quiz Header -->
+        <div class="quiz-detail-header mb-5">
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="quiz-category-badge" th:text="${quiz.category?.name} ?: 'Без категории'"></span>
+                        <span th:classappend="${'quiz-difficulty-badge ' + quiz.difficultyLevel.name().toLowerCase()}"
+                              th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' : (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"
+                              class="ms-3"></span>
+                    </div>
+
+                    <h1 class="quiz-detail-title" th:text="${quiz.title}"></h1>
+                    <p class="quiz-detail-description" th:text="${quiz.description}"></p>
+
+                    <!-- Quiz Stats -->
+                    <div class="quiz-stats mt-4">
+                        <div class="row">
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-play-circle"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" th:text="${quiz.playsCount}">0</div>
+                                        <div class="stat-label">Прохождений</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-star"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" th:text="${quiz.averageRating != null ? quiz.averageRating : '0.0'}">0.0</div>
+                                        <div class="stat-label">Рейтинг</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-clock"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" th:text="${totalTime}">10</div>
+                                        <div class="stat-label">Минут</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 col-6 mb-3">
+                                <div class="stat-item">
+                                    <div class="stat-icon">
+                                        <i class="bi bi-question-circle"></i>
+                                    </div>
+                                    <div class="stat-info">
+                                        <div class="stat-value" th:text="${questions.size()}">10</div>
+                                        <div class="stat-label">Вопросов</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+                </div>
 
-                        <h1 class="quiz-detail-title" th:text="${quiz.title}"></h1>
-                        <p class="quiz-detail-description" th:text="${quiz.description}"></p>
-
-                        <!-- Quiz Stats -->
-                        <div class="quiz-stats mt-4">
-                            <div class="row">
-                                <div class="col-md-3 col-6 mb-3">
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-play-circle"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <div class="stat-value" th:text="${quiz.playsCount}">0</div>
-                                            <div class="stat-label">Прохождений</div>
-                                        </div>
-                                    </div>
+                <div class="col-lg-4">
+                    <!-- Creator Info -->
+                    <div class="creator-card">
+                        <div class="creator-header">
+                            <h4 class="creator-title">Создатель</h4>
+                        </div>
+                        <div class="creator-body">
+                            <div class="d-flex align-items-center">
+                                <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
+                                     alt="Creator Avatar"
+                                     class="creator-avatar">
+                                <div class="ms-3">
+                                    <h5 class="creator-name mb-1" th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></h5>
+                                    <p class="creator-username text-muted mb-0">@<span th:text="${quiz.creator.username}"></span></p>
                                 </div>
+                            </div>
 
-                                <div class="col-md-3 col-6 mb-3">
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-star"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <div class="stat-value" th:text="${quiz.averageRating != null ? quiz.averageRating : '0.0'}">0.0</div>
-                                            <div class="stat-label">Рейтинг</div>
-                                        </div>
+                            <!-- Creator Stats -->
+                            <div class="creator-stats mt-3">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Создано викторин:</small>
+                                        <div class="fw-bold" th:text="${quiz.creator.statistic?.totalQuizzesCreated ?: 0}">0</div>
                                     </div>
-                                </div>
-
-                                <div class="col-md-3 col-6 mb-3">
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-clock"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <div class="stat-value" th:text="${totalTime}">10</div>
-                                            <div class="stat-label">Минут</div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-3 col-6 mb-3">
-                                    <div class="stat-item">
-                                        <div class="stat-icon">
-                                            <i class="bi bi-question-circle"></i>
-                                        </div>
-                                        <div class="stat-info">
-                                            <div class="stat-value" th:text="${questions.size()}">10</div>
-                                            <div class="stat-label">Вопросов</div>
-                                        </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Рейтинг:</small>
+                                        <div class="fw-bold" th:text="${quiz.creator.statistic?.averageScore ?: 0}">0</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="col-lg-4">
-                        <!-- Creator Info -->
-                        <div class="creator-card">
-                            <div class="creator-header">
-                                <h4 class="creator-title">Создатель</h4>
-                            </div>
-                            <div class="creator-body">
-                                <div class="d-flex align-items-center">
-                                    <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
-                                         alt="Creator Avatar"
-                                         class="creator-avatar">
-                                    <div class="ms-3">
-                                        <h5 class="creator-name mb-1" th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></h5>
-                                        <p class="creator-username text-muted mb-0">@<span th:text="${quiz.creator.username}"></span></p>
-                                    </div>
-                                </div>
-
-                                <!-- Creator Stats -->
-                                <div class="creator-stats mt-3">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <small class="text-muted">Создано викторин:</small>
-                                            <div class="fw-bold" th:text="${quiz.creator.statistic?.totalQuizzesCreated ?: 0}">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted">Рейтинг:</small>
-                                            <div class="fw-bold" th:text="${quiz.creator.statistic?.averageScore ?: 0}">0</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Play Button -->
-                        <div class="play-button-container mt-4">
-                            <a th:href="@{/quizzes/play/{id}(id=${quiz.id})}"
-                               class="btn btn-primary btn-play btn-lg w-100">
-                                <i class="bi bi-play-fill me-2"></i>Начать игру
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Features Section -->
-            <div class="features-grid mb-5">
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-clock"></i>
-                    </div>
-                    <h4 class="feature-title">Таймер</h4>
-                    <p class="feature-description">
-                        Ограниченное время на каждый вопрос подогревает азарт
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-star"></i>
-                    </div>
-                    <h4 class="feature-title">Рейтинг</h4>
-                    <p class="feature-description">
-                        Повышайте свой рейтинг, правильно отвечая на вопросы
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-trophy"></i>
-                    </div>
-                    <h4 class="feature-title">Достижения</h4>
-                    <p class="feature-description">
-                        Получайте награды за особые успехи в викторине
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">
-                        <i class="bi bi-graph-up"></i>
-                    </div>
-                    <h4 class="feature-title">Прогресс</h4>
-                    <p class="feature-description">
-                        Следите за своим развитием в статистике
-                    </p>
-                </div>
-            </div>
-
-            <!-- CTA Section -->
-            <div class="cta-section">
-                <div class="cta-icon">
-                    <i class="bi bi-play-fill"></i>
-                </div>
-                <h3 class="cta-title">Готовы к вызову?</h3>
-                <p class="cta-description">
-                    Присоединяйтесь к тысячам игроков, которые уже прошли эту викторину.
-                    Проверьте свои знания и соревнуйтесь за топовые позиции в рейтинге!
-                </p>
-                <div class="difficulty-meter">
-                    <div class="meter-header">
-                        <span class="meter-label">Сложность викторины</span>
-                        <span class="meter-value" th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' :
-                      (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></span>
-                    </div>
-                    <div class="meter-bar">
-                        <div th:classappend="${'meter-fill ' + quiz.difficultyLevel.name().toLowerCase()}"></div>
-                    </div>
-                    <div class="meter-labels">
-                        <span>Легко</span>
-                        <span>Средне</span>
-                        <span>Сложно</span>
+                    <!-- Play Button -->
+                    <div class="play-button-container mt-4">
+                        <a th:href="@{/quizzes/play/{id}(id=${quiz.id})}"
+                           class="btn btn-primary btn-play btn-lg w-100">
+                            <i class="bi bi-play-fill me-2"></i>Начать игру
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="container">
-                <div th:replace="~{fragments/footer :: footer}"></div>
+        <!-- Features Section -->
+        <div class="features-grid mb-5">
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-clock"></i>
+                </div>
+                <h4 class="feature-title">Таймер</h4>
+                <p class="feature-description">
+                    Ограниченное время на каждый вопрос подогревает азарт
+                </p>
             </div>
-        </footer>
 
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-star"></i>
+                </div>
+                <h4 class="feature-title">Рейтинг</h4>
+                <p class="feature-description">
+                    Повышайте свой рейтинг, правильно отвечая на вопросы
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-trophy"></i>
+                </div>
+                <h4 class="feature-title">Достижения</h4>
+                <p class="feature-description">
+                    Получайте награды за особые успехи в викторине
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="bi bi-graph-up"></i>
+                </div>
+                <h4 class="feature-title">Прогресс</h4>
+                <p class="feature-description">
+                    Следите за своим развитием в статистике
+                </p>
+            </div>
+        </div>
+
+        <!-- Rating Section -->
+        <div th:if="${#authorization.expression('isAuthenticated()') and currentUser != null and quiz.creator.id != currentUser.id}"
+             class="rating-section mt-4">
+            <h4 class="section-title">
+                <i class="bi bi-star me-2"></i>Оцените викторину
+            </h4>
+
+            <div class="rating-form">
+                <form th:action="@{/ratings/rate}" method="post">
+                    <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}">
+                    <input type="hidden" name="quizId" th:value="${quiz.id}">
+
+                    <!-- Звездный рейтинг -->
+                    <div class="star-rating mb-3">
+                        <div class="stars-input">
+                            <input type="radio" id="detail-star5" name="rating" value="5" required>
+                            <label for="detail-star5" title="5 звёзд">★</label>
+                            <input type="radio" id="detail-star4" name="rating" value="4">
+                            <label for="detail-star4" title="4 звезды">★</label>
+                            <input type="radio" id="detail-star3" name="rating" value="3">
+                            <label for="detail-star3" title="3 звезды">★</label>
+                            <input type="radio" id="detail-star2" name="rating" value="2">
+                            <label for="detail-star2" title="2 звезды">★</label>
+                            <input type="radio" id="detail-star1" name="rating" value="1">
+                            <label for="detail-star1" title="1 звезда">★</label>
+                        </div>
+                    </div>
+
+                    <!-- Комментарий -->
+                    <div class="mb-3">
+                        <label for="comment" class="form-label">Комментарий (необязательно)</label>
+                        <textarea class="form-control" id="comment" name="comment"
+                                  rows="3" maxlength="500"
+                                  placeholder="Поделитесь своим мнением о викторине..."></textarea>
+                    </div>
+
+                    <!-- Кнопка отправки -->
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-send me-2"></i>Отправить оценку
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Если пользователь уже оценил викторину -->
+        <div th:if="${#authorization.expression('isAuthenticated()') and currentUser != null and quiz.creator.id != currentUser.id and userHasRated != null and userHasRated}"
+             class="alert alert-info mt-4">
+            <i class="bi bi-info-circle me-2"></i>
+            Вы уже оценили эту викторину
+        </div>
+
+        <!-- Статистика рейтинга -->
+        <div class="rating-stats mt-4">
+            <h4 class="section-title">
+                <i class="bi bi-bar-chart me-2"></i>Рейтинг викторины
+            </h4>
+
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="rating-overall text-center">
+                        <div class="average-rating"
+                             th:text="${quiz.averageRating != null ? quiz.averageRating : '0.0'}">
+                            0.0
+                        </div>
+                        <div class="stars-display">
+                            <i th:each="i : ${#numbers.sequence(1, 5)}"
+                               th:classappend="${i <= (quiz.averageRating != null ? quiz.averageRating : 0)} ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'">
+                            </i>
+                        </div>
+                        <div class="rating-count"
+                             th:text="${quiz.ratingCounts != null ? quiz.ratingCounts + ' оценок' : 'Нет оценок'}">
+                            Нет оценок
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-9">
+                    <div class="rating-distribution" id="ratingDistribution">
+                        <div class="text-center py-3">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Загрузка распределения оценок...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Список отзывов -->
+        <div class="ratings-list mt-4">
+            <h4 class="section-title">
+                <i class="bi bi-chat-text me-2"></i>Отзывы игроков
+                <span class="badge bg-primary ms-2" th:text="${quiz.ratingCounts ?: 0}">0</span>
+            </h4>
+
+            <!-- Статистика оценок -->
+            <div class="rating-summary mb-4">
+                <div class="row align-items-center">
+                    <div class="col-md-3">
+                        <div class="average-rating-large text-center">
+                            <div class="average-number"
+                                 th:text="${quiz.averageRating != null ? quiz.averageRating : '0.0'}">
+                                0.0
+                            </div>
+                            <div class="stars-display mb-2">
+                                <i th:each="i : ${#numbers.sequence(1, 5)}"
+                                   th:classappend="${i <= (quiz.averageRating != null ? quiz.averageRating : 0)} ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'">
+                                </i>
+                            </div>
+                            <div class="rating-count"
+                                 th:text="${quiz.ratingCounts != null ? quiz.ratingCounts + ' оценок' : 'Нет оценок'}">
+                                Нет оценок
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <div id="ratingDistribution" class="distribution-bars">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Список отзывов -->
+            <div id="ratingsContainer">
+                <div class="text-center py-3">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Загрузка отзывов...</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопка "Показать еще" -->
+            <div class="text-center mt-3">
+                <button id="loadMoreRatings" class="btn btn-outline-primary"
+                        th:attr="data-quiz-id=${quiz.id}" style="display: none;">
+                    <i class="bi bi-arrow-down-circle me-2"></i>Показать ещё отзывы
+                </button>
+            </div>
+        </div>
+
+        <!-- CTA Section -->
+        <div class="cta-section">
+            <div class="cta-icon">
+                <i class="bi bi-play-fill"></i>
+            </div>
+            <h3 class="cta-title">Готовы к вызову?</h3>
+            <p class="cta-description">
+                Присоединяйтесь к тысячам игроков, которые уже прошли эту викторину.
+                Проверьте свои знания и соревнуйтесь за топовые позиции в рейтинге!
+            </p>
+            <div class="difficulty-meter">
+                <div class="meter-header">
+                    <span class="meter-label">Сложность викторины</span>
+                    <span class="meter-value" th:text="${quiz.difficultyLevel.name().toLowerCase()} == 'easy' ? 'Легко' : (${quiz.difficultyLevel.name().toLowerCase()} == 'medium' ? 'Средне' : 'Сложно')"></span>
+                </div>
+                <div class="meter-bar">
+                    <div th:classappend="${'meter-fill ' + quiz.difficultyLevel.name().toLowerCase()}"></div>
+                </div>
+                <div class="meter-labels">
+                    <span>Легко</span>
+                    <span>Средне</span>
+                    <span>Сложно</span>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div th:replace="~{fragments/footer :: footer}"></div>
+        </div>
+    </footer>
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</div>
 
-    </body>
-    </html>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<div th:replace="~{fragments/rating-modal :: ratingModal}"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quizId = [[${quiz.id}]];
+
+        // Инициализация звёздного рейтинга
+        initStarRating();
+
+        // Загрузка распределения оценок
+        if (quizId) {
+            loadRatingDistribution(quizId);
+            loadRatings(quizId, 0);
+        }
+    });
+
+    function initStarRating() {
+        const stars = document.querySelectorAll('.star-rating input[type="radio"]');
+        const labels = document.querySelectorAll('.star-rating label');
+
+        labels.forEach(label => {
+            label.addEventListener('mouseover', function() {
+                const value = this.previousElementSibling.value;
+                highlightStars(value);
+            });
+
+            label.addEventListener('mouseout', function() {
+                const selected = document.querySelector('.star-rating input[type="radio"]:checked');
+                highlightStars(selected ? selected.value : 0);
+            });
+        });
+
+        stars.forEach(star => {
+            star.addEventListener('change', function() {
+                highlightStars(this.value);
+            });
+        });
+    }
+
+    function highlightStars(value) {
+        const labels = document.querySelectorAll('.star-rating label');
+        labels.forEach(label => {
+            const starValue = label.previousElementSibling.value;
+            if (starValue <= value) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        });
+    }
+
+    function loadRatingDistribution(quizId) {
+        fetch(`/ratings/distribution/${quizId}`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('ratingDistribution');
+                if (container) {
+                    container.innerHTML = renderRatingDistribution(data.distribution, data.totalRatings);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки распределения:', error);
+                document.getElementById('ratingDistribution').innerHTML =
+                    '<p class="text-muted">Не удалось загрузить распределение оценок</p>';
+            });
+    }
+
+    function renderRatingDistribution(distribution, totalRatings) {
+        if (!distribution || totalRatings === 0) {
+            return '<p class="text-muted">Нет данных для отображения</p>';
+        }
+
+        let html = '<div class="distribution-bars">';
+
+        for (let i = 5; i >= 1; i--) {
+            const count = distribution[i.toString()] || 0;
+            const percentage = totalRatings > 0 ? (count / totalRatings) * 100 : 0;
+
+            html += `
+            <div class="distribution-row mb-2">
+                <div class="row align-items-center">
+                    <div class="col-2">
+                        <span class="star-label">${i}★</span>
+                    </div>
+                    <div class="col-8">
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-warning"
+                                 role="progressbar"
+                                 style="width: ${percentage}%"
+                                 aria-valuenow="${percentage}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-2">
+                        <span class="count-label">${count} (${percentage.toFixed(1)}%)</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    function loadRatings(quizId, page) {
+        fetch(`/ratings/quiz/${quizId}?page=${page}&size=5`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка загрузки отзывов');
+                }
+                return response.text();
+            })
+            .then(html => {
+                const container = document.getElementById('ratingsContainer');
+                const loadMoreBtn = document.getElementById('loadMoreRatings');
+
+                if (container) {
+                    container.innerHTML = html;
+
+                    // Показываем кнопку "Показать ещё", если есть больше отзывов
+                    const hasMorePages = container.querySelector('.pagination-container') !== null;
+                    if (loadMoreBtn) {
+                        loadMoreBtn.style.display = hasMorePages ? 'block' : 'none';
+                    }
+
+                    // обработчики для кнопок редактирования и удаления
+                    setupRatingActions();
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка загрузки оценок:', error);
+                const container = document.getElementById('ratingsContainer');
+                if (container) {
+                    container.innerHTML = '<div class="alert alert-danger">Не удалось загрузить отзывы</div>';
+                }
+            });
+    }
+
+    // Функция для кнопки "Показать ещё"
+    window.loadMoreRatings = function() {
+        const quizId = document.getElementById('loadMoreRatings').dataset.quizId;
+        const currentPage = parseInt(document.querySelector('.pagination .active .page-link')?.textContent || 1);
+        loadRatings(quizId, currentPage);
+    };
+
+    // Функция для загрузки страницы оценок через пагинацию
+    window.loadRatingsPage = function(pageNum) {
+        const quizId = [[${quiz.id}]];
+        loadRatings(quizId, pageNum);
+    };
+
+    // Функция для настройки обработчиков кнопок редактирования и удаления
+    function setupRatingActions() {
+        // Обработка редактирования
+        document.querySelectorAll('.edit-rating').forEach(button => {
+            button.addEventListener('click', function() {
+                const ratingId = this.getAttribute('data-rating-id');
+                editRating(ratingId);
+            });
+        });
+
+        // Обработка удаления
+        document.querySelectorAll('.delete-rating').forEach(button => {
+            button.addEventListener('click', function() {
+                const ratingId = this.getAttribute('data-rating-id');
+                deleteRating(ratingId);
+            });
+        });
+    }
+
+    function editRating(ratingId) {
+        // Получаем CSRF токен
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        // Запрашиваем данные оценки по её ID
+        fetch(`/ratings/get/${ratingId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...(csrfToken && csrfHeader ? {[csrfHeader]: csrfToken} : {})
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        throw new Error('Оценка не найдена');
+                    } else if (response.status === 401) {
+                        throw new Error('Требуется авторизация');
+                    } else {
+                        throw new Error('Ошибка загрузки данных оценки');
+                    }
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Показываем модальное окно редактирования
+                    showEditModal(data);
+                } else {
+                    alert(data.message || 'Не удалось загрузить данные оценки');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Ошибка: ' + error.message);
+            });
+    }
+
+    function showEditModal(ratingData) {
+        // Получаем CSRF токен
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        // Получаем ID викторины из текущей страницы
+        const quizId = [[${quiz.id}]];
+
+        // Создаем модальное окно для редактирования
+        const modalHtml = `
+        <div class="modal fade" id="editRatingModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Редактировать отзыв</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="editRatingForm" method="post" action="/ratings/update/${ratingData.ratingId}">
+                            <input type="hidden" name="_csrf" value="${csrfToken || ''}">
+                            <input type="hidden" name="id" value="${ratingData.ratingId}">
+                            <!-- Добавляем параметр, чтобы остаться на этой же странице -->
+                            <input type="hidden" name="returnTo" value="quiz">
+                            <input type="hidden" name="quizId" value="${quizId}">
+
+                            <!-- Звездный рейтинг -->
+                            <div class="star-rating mb-4">
+                                <div class="stars-input text-center">
+                                    ${[5,4,3,2,1].map(num => `
+                                        <input type="radio" id="edit-star${num}" name="rating"
+                                               value="${num}" ${Math.round(ratingData.rating) == num ? 'checked' : ''}>
+                                        <label for="edit-star${num}" title="${num} звезд">
+                                            ★
+                                        </label>
+                                    `).join('')}
+                                </div>
+                            </div>
+
+                            <!-- Комментарий -->
+                            <div class="mb-3">
+                                <label for="editComment" class="form-label">Комментарий</label>
+                                <textarea class="form-control" id="editComment" name="comment"
+                                          rows="4" maxlength="500">${ratingData.comment || ''}</textarea>
+                                <div class="form-text text-end">
+                                    <span id="editCharCount">${ratingData.comment ? ratingData.comment.length : 0}</span>/500 символов
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                        <button type="button" class="btn btn-primary" onclick="submitEditRating()">
+                            Сохранить изменения
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+
+        // Удаляем предыдущее модальное окно, если оно существует
+        const existingModal = document.getElementById('editRatingModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Добавляем модальное окно в DOM
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Инициализируем модальное окно
+        const modalElement = document.getElementById('editRatingModal');
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        // Инициализируем счетчик символов
+        const textarea = document.getElementById('editComment');
+        const charCount = document.getElementById('editCharCount');
+        if (textarea && charCount) {
+            textarea.addEventListener('input', function() {
+                charCount.textContent = this.value.length;
+            });
+        }
+
+        // Инициализируем звездный рейтинг в модальном окне
+        initModalStarRating('#editRatingModal .star-rating');
+
+        // Удаляем модальное окно при закрытии
+        modalElement.addEventListener('hidden.bs.modal', function() {
+            modalElement.remove();
+        });
+    }
+
+    function initModalStarRating(selector) {
+        const container = document.querySelector(selector);
+        if (!container) return;
+
+        const stars = container.querySelectorAll('input[type="radio"]');
+        const labels = container.querySelectorAll('label');
+
+        labels.forEach(label => {
+            label.addEventListener('mouseover', function() {
+                const value = this.previousElementSibling.value;
+                highlightModalStars(value, selector);
+            });
+
+            label.addEventListener('mouseout', function() {
+                const selected = container.querySelector('input[type="radio"]:checked');
+                highlightModalStars(selected ? selected.value : 0, selector);
+            });
+        });
+
+        stars.forEach(star => {
+            star.addEventListener('change', function() {
+                highlightModalStars(this.value, selector);
+            });
+        });
+    }
+
+    function highlightModalStars(value, selector) {
+        const labels = document.querySelectorAll(selector + ' label');
+        labels.forEach(label => {
+            const starValue = label.previousElementSibling.value;
+            if (starValue <= value) {
+                label.classList.add('active');
+            } else {
+                label.classList.remove('active');
+            }
+        });
+    }
+
+    function submitEditRating() {
+        const form = document.getElementById('editRatingForm');
+        if (!form) return;
+
+        // Проверяем, выбрана ли оценка
+        const ratingSelected = form.querySelector('input[name="rating"]:checked');
+        if (!ratingSelected) {
+            alert('Пожалуйста, выберите оценку');
+            return;
+        }
+
+        // Отправляем форму
+        form.submit();
+    }
+
+    function deleteRating(ratingId) {
+        if (!confirm('Вы уверены, что хотите удалить этот отзыв?')) {
+            return;
+        }
+
+        // Получаем CSRF токен
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        // Отправляем AJAX запрос
+        fetch(`/ratings/delete/${ratingId}`, {
+            method: 'GET',
+            headers: {
+                ...(csrfToken && csrfHeader ? {[csrfHeader]: csrfToken} : {})
+            }
+        })
+            .then(response => {
+                if (response.ok) {
+                    // Перезагружаем список отзывов
+                    const quizId = [[${quiz.id}]];
+                    loadRatings(quizId, 0);
+                    alert('Отзыв успешно удален!');
+                } else {
+                    alert('Ошибка при удалении отзыва');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+                alert('Произошла ошибка при удалении');
+            });
+    }
+</script>
+
+</body>
+</html>

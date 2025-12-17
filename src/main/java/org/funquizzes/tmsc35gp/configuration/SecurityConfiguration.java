@@ -27,6 +27,8 @@ public class SecurityConfiguration {
                                 "/quizzes",
                                 "/quizzes/**",
                                 "/quizzes/details/**",
+                                "/ratings/distribution/**",
+                                "/ratings/quiz/**",
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",

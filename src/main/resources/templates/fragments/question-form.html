@@ -35,11 +35,11 @@
                             th:name="|questions[${questionIndex}].type|"
                             th:attr="data-index=${questionIndex}"
                             onchange="changeQuestionType(this)">
-                        <option th:each="type : ${T(org.funquizzes.tmsc35gp.entity.QuestionType).values()}"
-                                th:value="${type}"
-                                th:text="${type.displayName}"
-                                th:selected="${question?.type == type or
-                                             (question == null and type == T(org.funquizzes.tmsc35gp.entity.QuestionType).SINGLE_CHOICE)}">
+                        <option th:each="qType : ${questionTypes}"
+                                th:value="${qType}"
+                                th:text="${qType.displayName}"
+                                th:selected="${(question != null and question.type == qType) or
+                      (question == null and qType == T(org.funquizzes.tmsc35gp.entity.QuestionType).SINGLE_CHOICE)}">
                         </option>
                     </select>
                 </div>

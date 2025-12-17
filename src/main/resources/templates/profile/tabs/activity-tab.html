@@ -1,11 +1,108 @@
+<!-- activity-tab.html -->
 <div th:fragment="activity">
   <div class="profile-card">
     <div class="profile-card-header">
-      <h5 class="profile-card-title"><i class="bi bi-activity me-2"></i>Активность</h5>
+      <h5 class="profile-card-title"><i class="bi bi-star-fill me-2"></i>Мои оценки викторин</h5>
+      <span class="badge bg-primary" th:text="${totalRatings ?: 0}">0</span>
     </div>
-    <div class="profile-card-body text-center py-5">
-      <i class="bi bi-activity display-4 text-primary mb-3"></i>
-      <h5>История активности скоро появится</h5>
+
+    <div class="profile-card-body" th:if="${ratings != null && !ratings.empty}">
+      <!-- Список оценок -->
+      <div class="activity-feed">
+        <div th:each="rating : ${ratings}" class="activity-item mb-4 p-3 border rounded">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-star-fill text-warning me-2"></i>
+              <div>
+                <h6 class="mb-0">
+                  <a th:href="@{/quizzes/details/{id}(id=${rating.quiz.id})}"
+                     th:text="${rating.quiz.title}"
+                     class="text-decoration-none text-dark">
+                  </a>
+                </h6>
+                <small class="text-muted" th:text="${#temporals.format(rating.createdAt, 'dd.MM.yyyy HH:mm')}"></small>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="d-flex align-items-center">
+                <span class="rating-value fw-bold me-2" th:text="${rating.rating}"></span>
+                <div class="stars-display">
+                  <i th:each="i : ${#numbers.sequence(1, 5)}"
+                     th:classappend="${i <= rating.rating} ? 'bi bi-star-fill text-warning' : 'bi bi-star text-muted'">
+                  </i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div th:if="${rating.comment != null && !rating.comment.isEmpty()}"
+               class="rating-comment mt-2 p-2 bg-light rounded">
+            <p class="mb-0" th:text="${rating.comment}"></p>
+          </div>
+
+          <div class="mt-2 d-flex justify-content-between">
+            <small class="text-muted">
+              <i class="bi bi-person me-1"></i>
+              Создатель:
+              <a th:href="@{/users/profile/view/{id}(id=${rating.quiz.creator.id})}"
+                 th:text="${rating.quiz.creator.name != null ? rating.quiz.creator.name : rating.quiz.creator.username}"
+                 class="text-decoration-none">
+              </a>
+            </small>
+            <div>
+              <a th:href="@{/quizzes/details/{id}(id=${rating.quiz.id})}"
+                 class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>К викторине
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Пагинация -->
+      <div th:if="${totalPages > 1}" class="mt-4">
+        <nav aria-label="Навигация по страницам">
+          <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/users/profile/main(tab='activity', page=${currentPage - 1})}"
+                 aria-label="Предыдущая">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+
+            <li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+                class="page-item"
+                th:classappend="${i == currentPage} ? 'active'">
+              <a class="page-link"
+                 th:href="@{/users/profile/main(tab='activity', page=${i})}"
+                 th:text="${i + 1}">
+              </a>
+            </li>
+
+            <li class="page-item" th:classappend="${currentPage >= totalPages - 1} ? 'disabled'">
+              <a class="page-link"
+                 th:href="@{/users/profile/main(tab='activity', page=${currentPage + 1})}"
+                 aria-label="Следующая">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        <div class="text-center text-muted mt-2">
+          Показано <span th:text="${ratings.size()}"></span> из <span th:text="${totalRatings}"></span> оценок
+        </div>
+      </div>
+
+    </div>
+
+    <div class="profile-card-body text-center py-5" th:if="${ratings == null || ratings.empty}">
+      <i class="bi bi-star display-4 text-primary mb-3"></i>
+      <h5>Вы ещё не оценили ни одной викторины</h5>
+      <p class="text-muted">После прохождения викторин вы сможете оставить свои оценки здесь</p>
+      <a th:href="@{/quizzes}" class="btn btn-primary mt-3">
+        <i class="bi bi-search me-2"></i>Найти викторины
+      </a>
     </div>
   </div>
 </div>

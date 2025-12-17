@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.LocalDateTime;
 
 @Entity
@@ -31,7 +32,7 @@ public class QuizRating {
     @Column(nullable = false)
     private Double rating;
 
-    // мб будет возможность оставлять отзывы
+    @Column(length = 1000)
     private String comment;
 
     @CreationTimestamp
