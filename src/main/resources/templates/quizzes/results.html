@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title th:text="'Результаты | ' + ${quiz.title}">Результаты викторины</title>
 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
-
     <!-- Custom CSS -->
     <link th:href="@{/css/index-style.css}" rel="stylesheet">
     <link th:href="@{/css/profile-style.css}" rel="stylesheet">
     <link th:href="@{/css/quizzes-style.css}" rel="stylesheet">
+    <link th:href="@{/css/rating-style.css}" rel="stylesheet">
 </head>
 <body>
 
@@ -142,6 +143,78 @@
                         </div>
                     </div>
 
+                    <!-- Quiz Statistics -->
+                    <div class="quiz-statistics mt-5">
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <div class="stat-card">
+                                    <div class="stat-card-header">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-graph-up"></i>
+                                        </div>
+                                        <h5 class="stat-title">Статистика викторины</h5>
+                                    </div>
+                                    <div class="stat-card-body">
+                                        <div class="creator-stats">
+                                            <div class="stat-item">
+                                                <span>Всего прохождений:</span>
+                                                <strong th:text="${quiz.playsCount}"></strong>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span>Средний рейтинг:</span>
+                                                <strong th:text="${quiz.averageRating} != null ? ${quiz.averageRating} + '/5' : 'Нет оценок'"></strong>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span>Оценок:</span>
+                                                <strong th:text="${quiz.ratingCounts}"></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <div class="stat-card">
+                                    <div class="stat-card-header">
+                                        <div class="stat-icon">
+                                            <i class="bi bi-person-circle"></i>
+                                        </div>
+                                        <h5 class="stat-title">Создатель</h5>
+                                    </div>
+                                    <div class="stat-card-body">
+                                        <!-- Блок с информацией о создателе -->
+                                        <div class="creator-mini">
+                                            <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
+                                                 alt="Creator"
+                                                 class="creator-avatar-mini">
+                                            <div class="creator-info">
+                                                <div class="creator-name"
+                                                     th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></div>
+                                                <small class="text-muted">@<span th:text="${quiz.creator.username}"></span></small>
+                                            </div>
+                                        </div>
+
+                                        <!-- Статистика создателя -->
+                                        <div class="creator-stats">
+                                            <div class="stat-item">
+                                                <span>Создано викторин:</span>
+                                                <strong th:text="${quiz.creator.statistic?.totalQuizzesCreated ?: 0}"></strong>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span>Рейтинг:</span>
+                                                <strong th:text="${quiz.creator.statistic?.averageScore ?: 0}"></strong>
+                                            </div>
+                                            <div class="stat-item">
+                                                <span>Общий рейтинг:</span>
+                                                <strong th:text="${quiz.creator.statistic?.totalScore ?: 0}"></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Action Buttons -->
                     <div class="action-buttons">
                         <div class="row">
@@ -164,76 +237,13 @@
                                 </a>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Quiz Statistics -->
-                <div class="quiz-statistics mt-5">
-                    <div class="row">
-                        <div class="col-md-6 mb-4">
-                            <div class="stat-card">
-                                <div class="stat-card-header">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-graph-up"></i>
-                                    </div>
-                                    <h5 class="stat-title">Статистика викторины</h5>
-                                </div>
-                                <div class="stat-card-body">
-                                    <div class="creator-stats">
-                                        <div class="stat-item">
-                                            <span>Всего прохождений:</span>
-                                            <strong th:text="${quiz.playsCount}"></strong>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span>Средний рейтинг:</span>
-                                            <strong th:text="${quiz.averageRating} != null ? ${quiz.averageRating} + '/5' : 'Нет оценок'"></strong>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span>Оценок:</span>
-                                            <strong th:text="${quiz.ratingCounts}"></strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-6 mb-4">
-                            <div class="stat-card">
-                                <div class="stat-card-header">
-                                    <div class="stat-icon">
-                                        <i class="bi bi-person-circle"></i>
-                                    </div>
-                                    <h5 class="stat-title">Создатель</h5>
-                                </div>
-                                <div class="stat-card-body">
-                                    <!-- Блок с информацией о создателе -->
-                                    <div class="creator-mini">
-                                        <img th:src="@{${quiz.creator.avatarUrl != null ? quiz.creator.avatarUrl : '/images/default-avatar.png'}}"
-                                             alt="Creator"
-                                             class="creator-avatar-mini">
-                                        <div class="creator-info">
-                                            <div class="creator-name"
-                                                 th:text="${quiz.creator.name != null ? quiz.creator.name : quiz.creator.username}"></div>
-                                            <small class="text-muted">@<span th:text="${quiz.creator.username}"></span></small>
-                                        </div>
-                                    </div>
-
-                                    <!-- Статистика создателя -->
-                                    <div class="creator-stats">
-                                        <div class="stat-item">
-                                            <span>Создано викторин:</span>
-                                            <strong th:text="${quiz.creator.statistic?.totalQuizzesCreated ?: 0}"></strong>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span>Рейтинг:</span>
-                                            <strong th:text="${quiz.creator.statistic?.averageScore ?: 0}"></strong>
-                                        </div>
-                                        <div class="stat-item">
-                                            <span>Общий рейтинг:</span>
-                                            <strong th:text="${quiz.creator.statistic?.totalScore ?: 0}"></strong>
-                                        </div>
-                                    </div>
-                                </div>
+                        <!-- Кнопка для принудительной оценки -->
+                        <div class="row mt-3">
+                            <div class="col-12 text-center">
+                                <button type="button" class="btn btn-warning btn-rate-now">
+                                    <i class="bi bi-star-fill me-2"></i>Оценить викторину сейчас
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -245,14 +255,466 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <!-- Footer content (same as in quizzes.html) -->
             <div th:replace="~{fragments/footer :: footer}"></div>
         </div>
     </footer>
 </div>
 
+<!-- Custom Rating Modal -->
+<div class="rating-modal-overlay" id="ratingModal">
+    <div class="rating-modal-content">
+        <button type="button" class="modal-close-btn" onclick="closeRatingModal()">
+            <i class="bi bi-x-lg"></i>
+        </button>
+
+        <div class="modal-rating-header">
+            <h3>Оцените викторину</h3>
+            <p>Поделитесь своим мнением о пройденной викторине</p>
+        </div>
+
+        <div class="modal-rating-body">
+            <!-- Interactive Star Rating -->
+            <div class="modal-rating-stars">
+                <div class="star-rating-interactive" id="interactiveRating">
+                    <input type="radio" id="star5" name="rating" value="5">
+                    <label for="star5" title="Отлично" class="star-tooltip">
+                        ★
+                        <span class="tooltip-text">Отлично</span>
+                    </label>
+
+                    <input type="radio" id="star4" name="rating" value="4">
+                    <label for="star4" title="Хорошо" class="star-tooltip">
+                        ★
+                        <span class="tooltip-text">Хорошо</span>
+                    </label>
+
+                    <input type="radio" id="star3" name="rating" value="3">
+                    <label for="star3" title="Нормально" class="star-tooltip">
+                        ★
+                        <span class="tooltip-text">Нормально</span>
+                    </label>
+
+                    <input type="radio" id="star2" name="rating" value="2">
+                    <label for="star2" title="Плохо" class="star-tooltip">
+                        ★
+                        <span class="tooltip-text">Плохо</span>
+                    </label>
+
+                    <input type="radio" id="star1" name="rating" value="1">
+                    <label for="star1" title="Ужасно" class="star-tooltip">
+                        ★
+                        <span class="tooltip-text">Ужасно</span>
+                    </label>
+                </div>
+
+                <div class="rating-selected-text" id="ratingSelectedText">
+                    <span class="text-muted">Выберите оценку от 1 до 5 звёзд</span>
+                </div>
+            </div>
+
+            <!-- Comment -->
+            <div class="modal-rating-comment">
+                <label for="ratingComment" class="form-label">
+                    <strong>Комментарий (необязательно):</strong>
+                </label>
+                <textarea class="form-control" id="ratingComment"
+                          rows="3" placeholder="Напишите ваш комментарий здесь..."
+                          maxlength="500"></textarea>
+                <div class="text-end mt-2">
+                    <small class="text-muted">
+                        <span id="charCount">0</span>/500 символов
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-rating-footer">
+            <button type="button" class="btn btn-skip" onclick="skipRating()">
+                Пропустить оценку
+            </button>
+            <button type="button" class="btn btn-submit" id="submitRatingBtn" disabled onclick="submitRating()">
+                Отправить оценку
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    const quizId = /*[[${quiz.id}]]*/ null;
+    const sessionId = /*[[${sessionId}]]*/ '';
+    let redirectUrl = null;
+    let userHasRated = false;
+    const quizCompleted = /*[[${quizCompleted}]]*/ false;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Страница результатов загружена');
+        console.log('Quiz ID:', quizId, 'Session ID:', sessionId);
+
+        if (quizCompleted) {
+            // Устанавливаем флаг в localStorage для уведомления
+            localStorage.setItem(`quiz_completed_${quizId}`, 'true');
+
+            // Показываем уведомление
+            showRatingNotification();
+        }
+
+        // Инициализация обработчиков для кнопок навигации
+        initNavigationButtons();
+
+        // Проверяем, оценивал ли пользователь викторину
+        checkIfUserHasRated();
+
+        // Инициализация модального окна оценки
+        initRatingModal();
+
+        // не завершил ли пользователь только что викторину
+        checkRecentCompletion();
+    });
+
+    function initNavigationButtons() {
+        // Добавляем обработчики для всех кнопок навигации
+        document.querySelectorAll('.btn-rate-redirect').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetUrl = this.getAttribute('data-target');
+                console.log('Нажата кнопка навигации на:', targetUrl);
+
+                // нужно ли показать модальное окно оценки
+                checkRatingAndRedirect(targetUrl);
+            });
+        });
+
+        // Кнопка для принудительной оценки
+        document.querySelector('.btn-rate-now')?.addEventListener('click', function() {
+            console.log('Пользователь хочет оценить викторину сейчас');
+            showRatingModal(null);
+        });
+    }
+
+    function checkIfUserHasRated() {
+        if (!quizId) return;
+
+        fetch(`/ratings/check/${quizId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Проверка оценки пользователя:', data);
+                userHasRated = data.hasRated;
+
+                if (!userHasRated) {
+                    // Показываем индикатор на кнопках
+                    document.querySelectorAll('.btn-rate-redirect').forEach(btn => {
+                        btn.classList.add('btn-needs-rating');
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при проверке оценки:', error);
+            });
+    }
+
+    function checkRecentCompletion() {
+        if (!quizId || !sessionId) return;
+
+        // Проверяем, только ли что завершили викторину
+        const justCompleted = localStorage.getItem(`quiz_completed_${quizId}`);
+        if (justCompleted === 'true') {
+            console.log('Пользователь только что завершил викторину');
+
+            // Показываем уведомление о возможности оценки
+            showRatingNotification();
+
+            // Очищаем флаг
+            localStorage.removeItem(`quiz_completed_${quizId}`);
+        }
+    }
+
+    function showRatingNotification() {
+        const notification = document.createElement('div');
+        notification.className = 'alert alert-info alert-dismissible fade show position-fixed';
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 1050; max-width: 400px;';
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="bi bi-star-fill text-warning me-3 fs-4"></i>
+                <div>
+                    <strong>Поздравляем с завершением викторины!</strong><br>
+                    <small>Не забудьте оценить викторину, чтобы помочь другим пользователям</small>
+                </div>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(notification);
+
+        // Автоматически скрыть через 5 секунд
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    function checkRatingAndRedirect(targetUrl) {
+        if (!quizId) {
+            window.location.href = targetUrl;
+            return;
+        }
+
+        // Если пользователь уже оценил викторину, сразу переходим
+        if (userHasRated) {
+            console.log('Пользователь уже оценил викторину, переходим на:', targetUrl);
+            window.location.href = targetUrl;
+            return;
+        }
+
+        // Проверяем через API
+        fetch(`/ratings/check/${quizId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.hasRated) {
+                    // Обновляем флаг и переходим
+                    userHasRated = true;
+                    window.location.href = targetUrl;
+                } else {
+                    // Показываем модальное окно оценки
+                    redirectUrl = targetUrl;
+                    showRatingModal(targetUrl);
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при проверке оценки:', error);
+                // В случае ошибки все равно переходим
+                window.location.href = targetUrl;
+            });
+    }
+
+    function initRatingModal() {
+        // Обработчики для звезд
+        document.querySelectorAll('#interactiveRating input[type="radio"]').forEach(star => {
+            star.addEventListener('change', function() {
+                updateSelectedRating(this.value);
+                document.getElementById('submitRatingBtn').disabled = false;
+            });
+        });
+
+        // Обработчик для текстового поля комментария
+        const commentTextarea = document.getElementById('ratingComment');
+        if (commentTextarea) {
+            commentTextarea.addEventListener('input', function() {
+                const length = this.value.length;
+                document.getElementById('charCount').textContent = length;
+                if (length > 500) {
+                    this.value = this.value.substring(0, 500);
+                    document.getElementById('charCount').textContent = 500;
+                }
+            });
+        }
+    }
+
+    function showRatingModal(targetUrl) {
+        if (targetUrl) {
+            console.log('Показ модального окна перед переходом на:', targetUrl);
+        }
+
+        // Сбрасываем форму
+        resetRatingModal();
+
+        // Показываем модальное окно
+        const modal = document.getElementById('ratingModal');
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeRatingModal() {
+        const modal = document.getElementById('ratingModal');
+        modal.classList.remove('show');
+        document.body.style.overflow = 'auto';
+
+        // Если есть URL для редиректа, выполняем
+        if (redirectUrl) {
+            console.log('Закрытие модального окна, переходим на:', redirectUrl);
+            window.location.href = redirectUrl;
+            redirectUrl = null;
+        }
+    }
+
+    function resetRatingModal() {
+        // Сбрасываем выбор звезд
+        document.querySelectorAll('#interactiveRating input[type="radio"]').forEach(star => {
+            star.checked = false;
+        });
+
+        // Сбрасываем комментарий
+        const commentTextarea = document.getElementById('ratingComment');
+        if (commentTextarea) {
+            commentTextarea.value = '';
+            document.getElementById('charCount').textContent = '0';
+        }
+
+        // Сбрасываем текст выбранной оценки
+        document.getElementById('ratingSelectedText').innerHTML =
+            '<span class="text-muted">Выберите оценку от 1 до 5 звёзд</span>';
+
+        // Деактивируем кнопку отправки
+        document.getElementById('submitRatingBtn').disabled = true;
+    }
+
+    function updateSelectedRating(rating) {
+        const ratingTexts = {
+            '1': 'Ужасно',
+            '2': 'Плохо',
+            '3': 'Нормально',
+            '4': 'Хорошо',
+            '5': 'Отлично'
+        };
+
+        const starsText = rating == 1 ? 'звезду' :
+            (rating > 1 && rating < 5 ? 'звезды' : 'звёзд');
+
+        const ratingText = document.getElementById('ratingSelectedText');
+        ratingText.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center">
+                <i class="bi bi-star-fill text-warning me-2 fs-4"></i>
+                <span>
+                    <strong>${rating} ${starsText}</strong>
+                    <span class="text-muted ms-2">(${ratingTexts[rating]})</span>
+                </span>
+            </div>
+        `;
+    }
+
+    function skipRating() {
+        console.log('Пользователь пропустил оценку');
+
+        // Сохраняем в localStorage, что пользователь пропустил оценку
+        if (quizId) {
+            localStorage.setItem(`rating_skipped_${quizId}`, 'true');
+        }
+
+        closeRatingModal();
+    }
+
+    function submitRating() {
+        const selectedRating = document.querySelector('#interactiveRating input[type="radio"]:checked');
+        const comment = document.getElementById('ratingComment')?.value || '';
+
+        if (!selectedRating) {
+            alert('Пожалуйста, выберите оценку');
+            return;
+        }
+
+        const rating = selectedRating.value;
+
+        if (!quizId || !sessionId) {
+            alert('Ошибка: отсутствуют данные викторины');
+            return;
+        }
+
+        // Отправляем оценку
+        sendRatingToServer(rating, comment);
+    }
+
+    function sendRatingToServer(rating, comment) {
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+
+        if (csrfToken && csrfHeader) {
+            headers[csrfHeader] = csrfToken;
+        }
+
+        // Показываем индикатор загрузки
+        const submitBtn = document.getElementById('submitRatingBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Отправка...';
+        submitBtn.disabled = true;
+
+        fetch('/ratings/rate-after-play', {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                rating: parseFloat(rating),
+                comment: comment,
+                quizId: parseInt(quizId),
+                sessionId: sessionId
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Ошибка сети: ' + response.status);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Обновляем флаг
+                    userHasRated = true;
+
+                    // Убираем индикаторы с кнопок
+                    document.querySelectorAll('.btn-needs-rating').forEach(btn => {
+                        btn.classList.remove('btn-needs-rating');
+                    });
+
+                    // Показываем сообщение об успехе
+                    showSuccessMessage();
+
+                    // Через 2 секунды закрываем модальное окно
+                    setTimeout(() => {
+                        submitBtn.innerHTML = originalText;
+                        submitBtn.disabled = false;
+                        closeRatingModal();
+                    }, 2000);
+                } else {
+                    alert(data.message || 'Ошибка при сохранении оценки');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при отправке оценки:', error);
+                alert('Произошла ошибка при отправке оценки. Пожалуйста, попробуйте еще раз.');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+    }
+
+    function showSuccessMessage() {
+        const ratingText = document.getElementById('ratingSelectedText');
+        ratingText.innerHTML = `
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle-fill me-3 fs-4"></i>
+                    <div>
+                        <strong>Спасибо за вашу оценку!</strong><br>
+                        <small>Ваше мнение поможет другим пользователям</small>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Сохраняем функцию для глобального использования
+    window.showRatingModal = showRatingModal;
+    window.closeRatingModal = closeRatingModal;
+    /*]]>*/
+</script>
 
 </body>
 </html>

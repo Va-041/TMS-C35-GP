@@ -1,0 +1,503 @@
+/* Стили для звёздного рейтинга */
+.star-rating {
+    direction: rtl;
+    unicode-bidi: bidi-override;
+}
+
+.star-rating input[type="radio"] {
+    display: none;
+}
+
+.star-rating label {
+    color: #ddd;
+    font-size: 2.5rem;
+    padding: 0 5px;
+    cursor: pointer;
+    transition: color 0.2s, transform 0.2s;
+}
+
+.star-rating label:hover,
+.star-rating label:hover ~ label,
+.star-rating input[type="radio"]:checked ~ label {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+.star-rating label.active {
+    color: #ffc107;
+}
+
+/* Стили для отображения выбранной оценки */
+.rating-selected {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 1.2rem;
+    color: #ffc107;
+    font-weight: bold;
+    min-height: 30px;
+}
+
+/* Стили для отображения оценки */
+.stars-display {
+    color: #ffc107;
+    font-size: 1.5rem;
+}
+
+.rating-overall {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+}
+
+.average-rating {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.rating-count {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Стили для распределения оценок */
+.distribution-bars .progress-bar {
+    transition: width 1s ease-in-out;
+}
+
+.star-label {
+    font-weight: 500;
+    color: #495057;
+}
+
+.count-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-align: right;
+}
+
+/* Стили для формы оценки */
+.rating-form {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+}
+
+/* Стили для модального окна оценки */
+.rating-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    justify-content: center;
+    align-items: center;
+}
+
+.rating-modal.show {
+    display: flex;
+}
+
+.modal-rating-content {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-rating-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.modal-rating-header h3 {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.modal-rating-header p {
+    color: #6c757d;
+}
+
+.modal-rating-body {
+    text-align: center;
+}
+
+.modal-rating-stars {
+    margin: 20px 0;
+}
+
+.modal-rating-comment {
+    margin-top: 20px;
+}
+
+.modal-rating-footer {
+    margin-top: 25px;
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Стили для списка отзывов */
+.ratings-list .rating-item {
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.ratings-list .rating-item:last-child {
+    border-bottom: none;
+}
+
+.rating-user {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.user-avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 10px;
+}
+
+.rating-comment {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 8px;
+    border-left: 3px solid #007bff;
+    margin-top: 10px;
+}
+
+/* Стили для интерактивных звезд */
+.star-rating-interactive {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: center;
+    gap: 5px;
+}
+
+.star-rating-interactive input[type="radio"] {
+    display: none;
+}
+
+.star-rating-interactive label {
+    font-size: 2.5rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.2s;
+    padding: 0 5px;
+}
+
+.star-rating-interactive label:hover,
+.star-rating-interactive label:hover ~ label,
+.star-rating-interactive input[type="radio"]:checked ~ label {
+    color: #ffc107;
+    transform: scale(1.1);
+}
+
+/* Tooltip для звезд */
+.star-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.star-tooltip .tooltip-text {
+    visibility: hidden;
+    width: 120px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.9rem;
+}
+
+.star-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.star-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .star-rating label {
+        font-size: 2rem;
+    }
+
+    .modal-rating-content {
+        padding: 20px;
+        width: 95%;
+    }
+}
+
+ .action-buttons .btn {
+     position: relative;
+ }
+
+.btn-needs-rating::after {
+    content: '★';
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #ffc107;
+    color: #000;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Стили для модального окна */
+.rating-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1060;
+}
+
+.rating-modal-overlay.show {
+    display: flex;
+}
+
+.rating-modal-content {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.4s ease-out;
+    position: relative;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-rating-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.modal-rating-header h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 2rem;
+    font-weight: 700;
+}
+
+.modal-rating-header p {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.modal-rating-stars {
+    margin: 30px 0;
+}
+
+.star-rating-interactive {
+    direction: rtl;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.star-rating-interactive input[type="radio"] {
+    display: none;
+}
+
+.star-rating-interactive label {
+    font-size: 3.5rem;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+}
+
+.star-rating-interactive label:hover,
+.star-rating-interactive label:hover ~ label,
+.star-rating-interactive input[type="radio"]:checked ~ label {
+    color: #ffc107;
+    transform: scale(1.2);
+}
+
+.star-tooltip {
+    position: relative;
+}
+
+.tooltip-text {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s;
+    margin-bottom: 10px;
+}
+
+.star-tooltip:hover .tooltip-text {
+    opacity: 1;
+    visibility: visible;
+}
+
+.rating-selected-text {
+    text-align: center;
+    margin: 20px 0;
+    min-height: 40px;
+    font-size: 1.3rem;
+    font-weight: 500;
+    color: #ffc107;
+}
+
+.modal-rating-comment textarea {
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 15px;
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.modal-rating-comment textarea:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.modal-rating-footer {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.modal-rating-footer .btn {
+    padding: 12px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s;
+}
+
+.modal-rating-footer .btn-skip {
+    background: #f8f9fa;
+    border: 2px solid #dee2e6;
+    color: #6c757d;
+}
+
+.modal-rating-footer .btn-skip:hover {
+    background: #e9ecef;
+    border-color: #ced4da;
+}
+
+.modal-rating-footer .btn-submit {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+}
+
+.modal-rating-footer .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.modal-rating-footer .btn-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #95a5a6;
+    cursor: pointer;
+    transition: color 0.3s;
+    z-index: 1;
+}
+
+.modal-close-btn:hover {
+    color: #e74c3c;
+}
+
+.completion-badge {
+    background: linear-gradient(135deg, #ffc107, #ff9800);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-left: 5px;
+}
