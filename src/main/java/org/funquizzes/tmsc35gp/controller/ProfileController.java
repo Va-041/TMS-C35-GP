@@ -1,5 +1,6 @@
 package org.funquizzes.tmsc35gp.controller;
 
+import jakarta.validation.Valid;
 import org.funquizzes.tmsc35gp.dto.ChangePasswordDto;
 import org.funquizzes.tmsc35gp.dto.UpdateProfileDto;
 import org.funquizzes.tmsc35gp.entity.Quiz;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Optional;
 import java.util.UUID;
 
 @Controller
@@ -178,12 +181,47 @@ public class ProfileController {
 
     // Обработка редактирования профиля с загрузкой аватарки
     @PostMapping("/edit")
-    public String profileEdit(@ModelAttribute UpdateProfileDto updateDto,
+    public String profileEdit(@Valid @ModelAttribute UpdateProfileDto updateDto,
+                              BindingResult bindingResult,
                               @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
                               Authentication authentication,
-                              RedirectAttributes redirectAttributes) {
+                              RedirectAttributes redirectAttributes,
+                              Model model) {
+
+        // Проверка валидации
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("activeTab", "edit");
+            model.addAttribute("updateProfileDto", updateDto);
+
+            // Загружаем пользователя для отображения
+            User user = (User) userService.loadUserByUsername(authentication.getName());
+            model.addAttribute("user", user);
+
+            return "profile/main";
+        }
+
         try {
             User user = (User) userService.loadUserByUsername(authentication.getName());
+
+            // Проверка уникальности username
+            Optional<User> existingUser = userService.findByUsername(updateDto.getUsername());
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(user.getId())) {
+                bindingResult.rejectValue("username", "error.username", "Этот username уже занят");
+                model.addAttribute("activeTab", "edit");
+                model.addAttribute("updateProfileDto", updateDto);
+                model.addAttribute("user", user);
+                return "profile/main";
+            }
+
+            // Проверка уникальности email
+            existingUser = userService.findByEmail(updateDto.getEmail());
+            if (existingUser.isPresent() && !existingUser.get().getId().equals(user.getId())) {
+                bindingResult.rejectValue("email", "error.email", "Этот email уже используется");
+                model.addAttribute("activeTab", "edit");
+                model.addAttribute("updateProfileDto", updateDto);
+                model.addAttribute("user", user);
+                return "profile/main";
+            }
 
             // Сохраняем аватарку, если она загружена
             if (avatarFile != null && !avatarFile.isEmpty()) {
@@ -244,16 +282,45 @@ public class ProfileController {
 
     // Обработка смены пароля
     @PostMapping("/change-password")
-    public String changePassword(@ModelAttribute ChangePasswordDto dto,
+    public String changePassword(@Valid @ModelAttribute ChangePasswordDto dto,
+                                 BindingResult bindingResult,
                                  Authentication authentication,
-                                 RedirectAttributes redirectAttributes) {
+                                 RedirectAttributes redirectAttributes,
+                                 Model model) {
+
+        // Проверка валидации
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("activeTab", "change-password");
+            model.addAttribute("passwordDto", dto);
+
+            // Загружаем пользователя
+            User user = (User) userService.loadUserByUsername(authentication.getName());
+            model.addAttribute("user", user);
+
+            return "profile/main";
+        }
+
+        // Проверка совпадения новых паролей
+        if (!dto.getNewPassword().equals(dto.getConfirmPassword())) {
+            bindingResult.rejectValue("confirmPassword", "error.confirmPassword", "Пароли не совпадают");
+            model.addAttribute("activeTab", "change-password");
+            model.addAttribute("passwordDto", dto);
+            User user = (User) userService.loadUserByUsername(authentication.getName());
+            model.addAttribute("user", user);
+            return "profile/main";
+        }
+
         boolean success = userService.changePassword(authentication.getName(), dto);
         if (success) {
             String encodedMessage = URLEncoder.encode("Пароль успешно изменён", StandardCharsets.UTF_8);
             return "redirect:/users/profile/main?tab=overview&message=" + encodedMessage;
         } else {
-            String encodedMessage = URLEncoder.encode("Неверный текущий пароль или пароли не совпадают", StandardCharsets.UTF_8);
-            return "redirect:/users/profile/main?tab=change-password&message=" + encodedMessage;
+            bindingResult.rejectValue("currentPassword", "error.currentPassword", "Неверный текущий пароль");
+            model.addAttribute("activeTab", "change-password");
+            model.addAttribute("passwordDto", dto);
+            User user = (User) userService.loadUserByUsername(authentication.getName());
+            model.addAttribute("user", user);
+            return "profile/main";
         }
     }
 

@@ -1,7 +1,9 @@
 package org.funquizzes.tmsc35gp.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.funquizzes.tmsc35gp.dto.StatsDTO;
 import org.funquizzes.tmsc35gp.entity.Category;
+import org.funquizzes.tmsc35gp.service.AnalyticService;
 import org.funquizzes.tmsc35gp.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -20,6 +22,8 @@ public class IndexPageController {
 
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private AnalyticService analyticService;
 
     @GetMapping
     public String index(Model model) {
@@ -32,9 +36,13 @@ public class IndexPageController {
             log.info("No user logged in");
         }
 
+        StatsDTO stats = analyticService.getHomePageStats();
+
         // Получаем все активные категории
         List<Category> categories = categoryService.getAllActiveCategories();
         model.addAttribute("categories", categories);
+        model.addAttribute("stats", stats);
+        model.addAttribute("categories", categoryService.getAllActiveCategories());
 
         // Устанавливаем цвета и иконки по умолчанию для категорий без них
         for (Category category : categories) {

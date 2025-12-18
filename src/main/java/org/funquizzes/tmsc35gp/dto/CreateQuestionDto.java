@@ -49,9 +49,10 @@ public class CreateQuestionDto {
         return true;
     }
 
-    @Min(value = 50, message = "Минимальное количество баллов: 50")
-    @Max(value = 1000, message = "Максимальное количество баллов: 1000")
-    private Integer points = 100;
+    @NotNull(message = "Количество баллов обязательно")
+    @Min(value = 50, message = "Минимум 50 баллов")
+    @Max(value = 1000, message = "Максимум 1000 баллов")
+    private Integer points;
 
     @Min(value = 10, message = "Минимальное время: 10 секунд")
     @Max(value = 300, message = "Максимальное время: 300 секунд (5 минут)")

@@ -1,5 +1,7 @@
 package org.funquizzes.tmsc35gp.service;
 
+import jakarta.annotation.PostConstruct;
+import lombok.Getter;
 import org.funquizzes.tmsc35gp.dto.ChangePasswordDto;
 import org.funquizzes.tmsc35gp.dto.UpdateProfileDto;
 import org.funquizzes.tmsc35gp.entity.Role;
@@ -8,6 +10,7 @@ import org.funquizzes.tmsc35gp.entity.UserStatistic;
 import org.funquizzes.tmsc35gp.repository.StatisticRepository;
 import org.funquizzes.tmsc35gp.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -15,9 +18,15 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
+import static org.funquizzes.tmsc35gp.controller.UserController.logger;
 
 @Service
 public class UserService implements UserDetailsService {
@@ -28,6 +37,16 @@ public class UserService implements UserDetailsService {
     BCryptPasswordEncoder encoder = new BCryptPasswordEncoder(11);
     @Autowired
     private StatisticRepository statisticRepository;
+
+    // Мапа для хранения времени последней активности по username
+    private final Map<String, LocalDateTime> userActivityMap = new ConcurrentHashMap<>();
+
+    // Время в минутах, после которого пользователь считается оффлайн
+    private static final int OFFLINE_THRESHOLD_MINUTES = 3;
+
+    // Текущее количество онлайн пользователей
+    @Getter
+    private volatile int onlineUsersCount = 0;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -46,6 +65,10 @@ public class UserService implements UserDetailsService {
         return userRepository.findByUsername(username);
     }
 
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
     //get or create user statistic
     private UserStatistic getOrCreateStatistic(User user) {
         return statisticRepository.findByUserId(user.getId())
@@ -60,20 +83,118 @@ public class UserService implements UserDetailsService {
         return getOrCreateStatistic(user);
     }
 
+    @Transactional
+    public void updateLastActivity(String username) {
+        User user = (User) loadUserByUsername(username);
+
+        // Обновляем в БД
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
+        // Обновляем в памяти
+        userActivityMap.put(username, LocalDateTime.now());
+
+        // Пересчитываем онлайн пользователей
+        recalculateOnlineUsers();
+    }
+
+    // пересчёт онлайна
+    private void recalculateOnlineUsers() {
+        LocalDateTime threshold = LocalDateTime.now().minus(OFFLINE_THRESHOLD_MINUTES, ChronoUnit.MINUTES);
+
+        long onlineCount = userActivityMap.entrySet().stream()
+                .filter(entry -> entry.getValue().isAfter(threshold))
+                .count();
+
+        this.onlineUsersCount = (int) onlineCount;
+    }
+
+    // статистика онлайн пользователей
+    public Map<String, Object> getOnlineStats() {
+        LocalDateTime threshold = LocalDateTime.now().minus(OFFLINE_THRESHOLD_MINUTES, ChronoUnit.MINUTES);
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("onlineCount", onlineUsersCount);
+        stats.put("totalActive", userActivityMap.size());
+        stats.put("thresholdMinutes", OFFLINE_THRESHOLD_MINUTES);
+
+        return stats;
+    }
+
+    // чистка неактивных каждую минуту
+    @Scheduled(fixedDelay = 60000)
+    @Transactional
+    public void cleanupInactiveUsers() {
+        LocalDateTime threshold = LocalDateTime.now().minus(OFFLINE_THRESHOLD_MINUTES, ChronoUnit.MINUTES);
+
+        // Удаляем неактивных из мапы
+        userActivityMap.entrySet().removeIf(entry -> entry.getValue().isBefore(threshold));
+
+        // Пересчитываем онлайн пользователей
+        recalculateOnlineUsers();
+
+        System.out.println("Cleaned up inactive users. Online: " + onlineUsersCount);
+    }
+
+    // загрузка при иницаизации пользователй которые были активны недавно.
+    @PostConstruct
+    @Transactional
+    public void initOnlineUsers() {
+        LocalDateTime threshold = LocalDateTime.now().minus(OFFLINE_THRESHOLD_MINUTES, ChronoUnit.MINUTES);
+
+        // Загружаем всех пользователей, у которых lastLoginAt был недавно
+        List<User> recentlyActiveUsers = userRepository.findAll().stream()
+                .filter(user -> user.getLastLoginAt() != null &&
+                        user.getLastLoginAt().isAfter(threshold))
+                .collect(Collectors.toList());
+
+        // Добавляем их в мапу
+        for (User user : recentlyActiveUsers) {
+            userActivityMap.put(user.getUsername(), user.getLastLoginAt());
+        }
+
+        recalculateOnlineUsers();
+        System.out.println("Initialized online users: " + onlineUsersCount);
+    }
+
     // create user
     @Transactional
     public void create(User user) {
-        user.setPassword(encoder.encode(user.getPassword()));
-        user.getRoles().add(Role.ROLE_USER);
-        user.setCreatedAt(LocalDateTime.now());
-        //save user
-        User savedUser = userRepository.save(user);
-        //create + save statistic
-        UserStatistic statistic = new UserStatistic(savedUser);
-        statisticRepository.save(statistic);
-        //связываем user и statistic
-        savedUser.setStatistic(statistic);
-        userRepository.save(savedUser);
+        logger.info("=== UserService.create() ВЫЗВАН ===");
+        logger.info("Username: {}", user.getUsername());
+
+        try {
+            // 1. Проверка существования пользователя
+            logger.info("Проверка существования пользователя...");
+            if (userRepository.findByUsername(user.getUsername()).isPresent()) {
+                logger.error("Пользователь уже существует: {}", user.getUsername());
+                throw new IllegalArgumentException("Пользователь с таким именем уже существует");
+            }
+            logger.info("Пользователь не существует, можно создавать");
+
+            // 2. Подготовка пользователя
+            logger.info("Шифрование пароля...");
+            user.setPassword(encoder.encode(user.getPassword()));
+            user.getRoles().add(Role.ROLE_USER);
+            logger.info("Роль добавлена: ROLE_USER");
+
+            // 3. Сохраняем пользователя
+            logger.info("Сохранение пользователя в БД...");
+            User savedUser = userRepository.save(user);
+            logger.info("User saved with ID: {}", savedUser.getId());
+
+            // 4. Создаем статистику
+            logger.info("Создание статистики...");
+            UserStatistic statistic = new UserStatistic(savedUser);
+            statisticRepository.save(statistic);
+            logger.info("Statistic created");
+
+            logger.info("=== ПОЛЬЗОВАТЕЛЬ УСПЕШНО СОЗДАН ===");
+
+        } catch (Exception e) {
+            logger.error("ОШИБКА в create(): {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     //update profile
