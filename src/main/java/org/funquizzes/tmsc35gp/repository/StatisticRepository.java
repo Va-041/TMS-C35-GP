@@ -16,12 +16,12 @@ public interface StatisticRepository extends JpaRepository<UserStatistic, Long> 
     @Query("SELECT s FROM UserStatistic s WHERE s.user.username = :username")
     Optional<UserStatistic> findByUsername(@Param("username") String username);
 
-    @Query("SELECT s FROM UserStatistic s WHERE s.user.isPublicProfile = true ORDER BY s.totalScore DESC")
+    @Query("SELECT s FROM UserStatistic s WHERE s.user.isPublicProfile = true ORDER BY s.totalScore DESC LIMIT :limit")
     List<UserStatistic> findTopByOrderByTotalScoreDesc(@Param("limit") int limit);
 
-    @Query("SELECT s FROM UserStatistic s WHERE s.user.isPublicProfile = true ORDER BY s.winStreak DESC")
+    @Query("SELECT s FROM UserStatistic s WHERE s.user.isPublicProfile = true ORDER BY s.winStreak DESC LIMIT :limit")
     List<UserStatistic> findTopByWinStreakDesc(@Param("limit") int limit);
 
-    @Query("SELECT s FROM UserStatistic s WHERE s.user.isPublicProfile = true ORDER BY s.bestScore DESC")
+    @Query("SELECT s FROM UserStatistic s WHERE s.user.isPublicProfile = true ORDER BY s.bestScore DESC LIMIT :limit")
     List<UserStatistic> findTopByBestScoreDesc(@Param("limit") int limit);
 }

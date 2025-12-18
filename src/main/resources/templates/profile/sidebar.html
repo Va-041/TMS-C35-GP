@@ -4,7 +4,7 @@
     <div class="sidebar-card">
         <!-- Заголовок сайдбара с аватаркой -->
         <div class="sidebar-header">
-            <img th:src="${user.avatarUrl ?: '/images/default-avatar.png'}"
+            <img th:src="@{${user.avatarUrl} ?: '/images/default-avatar.png'}"
                  class="user-avatar"
                  alt="Аватар пользователя"
                  onerror="this.src='/images/default-avatar.png'">

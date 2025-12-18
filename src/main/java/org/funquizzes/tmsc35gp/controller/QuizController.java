@@ -318,11 +318,18 @@ public class QuizController {
             @RequestParam(required = false, defaultValue = "0") int page,
             @RequestParam(required = false, defaultValue = "12") int size,
             @RequestParam(required = false, defaultValue = "false") boolean ajax,
-            Model model) {
+            Model model,
+            Authentication authentication) {
 
         try {
             Pageable pageable = PageRequest.of(page, size, getSort(sort));
             Page<Quiz> quizzesPage;
+
+            // Если пользователь авторизован, добавляем в модель
+            if (authentication != null && authentication.isAuthenticated()) {
+                User currentUser = (User) userService.loadUserByUsername(authentication.getName());
+                model.addAttribute("currentUser", currentUser);
+            }
 
             final List<Long> selectedCategoryIds = new ArrayList<>();
             if (categories != null && !categories.isEmpty()) {
