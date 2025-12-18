@@ -21,6 +21,15 @@ public interface QuizRepository extends JpaRepository<Quiz, Long> {
     Page<Quiz> findByCategoryAndIsPublicTrue(Category category, Pageable pageable);
     Page<Quiz> findByDifficultyLevelAndIsPublicTrue(DifficultyLevel difficultyLevel, Pageable pageable);
 
+    @Query("SELECT COUNT(q) FROM Quiz q WHERE q.isPublic = true")
+    long countByIsPublicTrue();
+
+    @Query("SELECT c.name, COUNT(q) as quizCount FROM Quiz q " +
+            "JOIN q.category c " +
+            "WHERE q.isPublic = true " +
+            "GROUP BY c.id, c.name " +
+            "ORDER BY quizCount DESC")
+    List<Object[]> findTopCategories();
 
     // поиск викторин со статусом Публичная
     @Query("SELECT q FROM Quiz q WHERE q.isPublic = true AND " +

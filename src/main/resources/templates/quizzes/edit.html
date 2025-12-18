@@ -327,6 +327,32 @@
                 }
             }
         });
+        document.querySelectorAll('.option-row').forEach(row => {
+            const removeButton = row.querySelector('.btn-outline-danger');
+            if (!removeButton) {
+                // Создаем кнопку удаления, если её нет
+                const buttonHtml = `
+                <button type="button" class="btn btn-outline-danger btn-sm"
+                        style="flex-shrink: 0; min-width: 32px; height: 32px;">
+                    <i class="bi bi-x"></i>
+                </button>
+            `;
+                row.insertAdjacentHTML('beforeend', buttonHtml);
+
+                // Находим индекс вопроса и варианта для настройки обработчика
+                const questionId = row.closest('[id^="options-list-"]').id;
+                const questionIndex = questionId.replace('options-list-', '');
+                const optionIndex = row.querySelector('input[name*="correctAnswers"]')?.value;
+
+                if (questionIndex && optionIndex !== undefined) {
+                    const newButton = row.querySelector('.btn-outline-danger');
+                    newButton.onclick = function() {
+                        removeOption(parseInt(questionIndex), parseInt(optionIndex));
+                    };
+                }
+            }
+        });
+
 
         updateQuestionCount();
     });
@@ -465,7 +491,7 @@
 
         trueFalseOptions.forEach((optionText, i) => {
             const newOptionHtml = `
-        <div class="option-row d-flex align-items-center gap-2">
+        <div class="option-row d-flex align-items-center gap-2 mb-2">
             <div class="option-checkbox">
                 <input type="radio"
                        id="option-correct-${index}-${i}"
@@ -473,13 +499,14 @@
                        value="${i}"
                        ${i === 0 ? 'checked' : ''}>
             </div>
-            <input type="text" class="quiz-form-control option-text"
+            <input type="text" class="quiz-form-control option-text flex-grow-1"
                    id="option-text-${index}-${i}"
                    name="questions[${index}].options"
                    value="${optionText}"
                    readonly
                    style="background-color: #f8f9fa; cursor: not-allowed;">
             <input type="hidden" name="questions[${index}].optionImages" value="">
+            <!-- Для TRUE_FALSE кнопки удаления нет -->
         </div>
     `;
             container.insertAdjacentHTML('beforeend', newOptionHtml);
@@ -529,19 +556,25 @@
         }
 
         const newOptionHtml = `
-    <div class="option-row d-flex align-items-center gap-2">
+    <div class="option-row d-flex align-items-center gap-2 mb-2">
         <div class="option-checkbox">
             <input type="${inputType}"
                    id="option-correct-${questionIndex}-${optionCount}"
                    name="${inputName}"
                    value="${optionCount}">
         </div>
-        <input type="text" class="quiz-form-control option-text"
+        <input type="text" class="quiz-form-control option-text flex-grow-1"
                id="option-text-${questionIndex}-${optionCount}"
                name="questions[${questionIndex}].options"
                placeholder="Вариант ${optionCount + 1}"
                required>
         <input type="hidden" name="questions[${questionIndex}].optionImages" value="">
+        <!-- КНОПКА УДАЛЕНИЯ ВАРИАНТА -->
+        <button type="button" class="btn btn-outline-danger btn-sm"
+                onclick="removeOption(${questionIndex}, ${optionCount})"
+                style="flex-shrink: 0; min-width: 32px; height: 32px;">
+            <i class="bi bi-x"></i>
+        </button>
     </div>
 `;
 
@@ -679,6 +712,76 @@
             }
         };
         input.click();
+    }
+
+    function removeOption(questionIndex, optionIndex) {
+        const container = document.getElementById('options-list-' + questionIndex);
+        if (!container) return;
+
+        const questionType = document.getElementById(`question-type-${questionIndex}`)?.value;
+
+        // Для TRUE_FALSE нельзя удалять варианты
+        if (questionType === 'TRUE_FALSE') {
+            alert('Для типа "Правда/Ложь" нельзя удалять варианты ответа');
+            return;
+        }
+
+        const optionRows = container.querySelectorAll('.option-row');
+        if (optionRows.length <= 2) {
+            alert('Минимальное количество вариантов: 2');
+            return;
+        }
+
+        // Найти и удалить конкретный вариант по индексу
+        const optionToRemove = Array.from(optionRows).find(row => {
+            const input = row.querySelector('input[name*="correctAnswers"]');
+            return input && input.value === optionIndex.toString();
+        });
+
+        if (optionToRemove) {
+            // Анимация удаления
+            optionToRemove.style.transition = 'opacity 0.3s, transform 0.3s';
+            optionToRemove.style.opacity = '0';
+            optionToRemove.style.transform = 'translateX(50px)';
+
+            setTimeout(() => {
+                optionToRemove.remove();
+                // Обновить индексы оставшихся вариантов
+                updateOptionIndexes(questionIndex);
+            }, 300);
+        }
+    }
+
+    function updateOptionIndexes(questionIndex) {
+        const container = document.getElementById('options-list-' + questionIndex);
+        if (!container) return;
+
+        const optionRows = container.querySelectorAll('.option-row');
+        optionRows.forEach((row, index) => {
+            // Обновляем все поля с новыми индексами
+            const inputs = row.querySelectorAll('input');
+            inputs.forEach(input => {
+                const oldId = input.id;
+                const newId = oldId.replace(/-\d+$/, `-${index}`);
+                input.id = newId;
+
+                if (input.name.includes('correctAnswers')) {
+                    input.value = index;
+                }
+            });
+
+            // Обновляем обработчик кнопки удаления
+            const removeButton = row.querySelector('button[onclick*="removeOption"]');
+            if (removeButton) {
+                removeButton.setAttribute('onclick', `removeOption(${questionIndex}, ${index})`);
+            }
+
+            // Обновляем placeholder текстового поля
+            const textInput = row.querySelector('.option-text');
+            if (textInput) {
+                textInput.placeholder = `Вариант ${index + 1}`;
+            }
+        });
     }
 
 </script>

@@ -1,5 +1,6 @@
 package org.funquizzes.tmsc35gp.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -23,6 +24,7 @@ public class CreateQuizDto {
 
     private boolean isPublic = true;
 
+
     private Long categoryId;
 
     @NotNull(message = "Необходимо указать уровень сложности викторины")
@@ -31,9 +33,10 @@ public class CreateQuizDto {
     // шапка квиза
     private String headImage;
 
-    @Min(value = 10, message = "Минимальное количество вопросов: 10")
-    @Max(value = 30, message = "Максимальное количество вопросов: 30")
-    private Integer maxQuestions = 10;
+    @NotNull(message = "Максимальное количество вопросов обязательно")
+    @Min(value = 10, message = "Минимум 10 вопросов")
+    @Max(value = 30, message = "Максимум 30 вопросов")
+    private Integer maxQuestions;
 
     @Min(value = 2, message = "Время на викторину должно быть не менее 2 минуты")
     @Max(value = 150, message = "Время на викторину не должно превышать 2.5 часов")
@@ -41,5 +44,6 @@ public class CreateQuizDto {
 
     @NotNull(message = "Вопросы обязательны")
     @Size(min = 10, max = 30, message = "Количество вопросов должно быть от 10 до 30")
+    @Valid
     private List<CreateQuestionDto> questions;
 }

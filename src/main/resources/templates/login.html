@@ -54,6 +54,15 @@
                     <div class="auth-body">
 
                         <form th:action="@{/users/log-in}" method="post">
+
+                            <div th:if="${param.error}" class="alert alert-danger">
+                                Неверное имя пользователя или пароль
+                            </div>
+
+                            <div th:if="${param.expired}" class="alert alert-warning">
+                                Сессия истекла. Пожалуйста, войдите снова.
+                            </div>
+
                             <!-- Имя пользователя -->
                             <div class="form-floating">
                                 <input type="text" class="form-control" id="username" name="username"

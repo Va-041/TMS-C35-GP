@@ -21,6 +21,7 @@ public class SecurityConfiguration {
                         // Публичные пути
                         .requestMatchers(
                                 "/",
+                                "/api/users/heartbeat",
                                 "/users/sing-up",
                                 "/users/log-in",
                                 "/users/profile/view/**", // публичные профили
@@ -32,6 +33,7 @@ public class SecurityConfiguration {
                                 "/css/**",
                                 "/js/**",
                                 "/images/**",
+                                "/uploads/**",
                                 "/favicon.ico",
                                 "/fragments/**"
                         )
