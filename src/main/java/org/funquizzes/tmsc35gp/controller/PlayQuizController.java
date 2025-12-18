@@ -285,14 +285,9 @@ public class PlayQuizController {
                               Model model,
                               HttpServletRequest request) {
         try {
-            System.out.println("=== ПОКАЗ РЕЗУЛЬТАТОВ ===");
-            System.out.println("Quiz ID: " + quizId);
-            System.out.println("Session ID: " + session);
-
             GameSession gameSession = activeGameSessions.get(session);
 
             if (gameSession == null) {
-                System.out.println("Игровая сессия не найдена!");
                 String encodedMessage = URLEncoder.encode("Результаты не найдены", StandardCharsets.UTF_8);
                 return "redirect:/quizzes?message=" + encodedMessage;
             }
@@ -313,7 +308,11 @@ public class PlayQuizController {
 
             // Сохраняем результаты в статистику
             String username = authentication.getName();
+
+            // обновляем статистику пользователя
             quizService.recordQuizPlay(username, totalScore, correctAnswers, totalQuestions);
+
+            // обновляем статистику викторины
             quizService.incrementPlaysCount(quizId);
 
             // Устанавливаем флаг, что викторина только что завершена
@@ -321,8 +320,6 @@ public class PlayQuizController {
 
             // Передаем sessionId в модель для модального окна
             model.addAttribute("sessionId", session);
-
-            System.out.println("Session ID передан в модель: " + session);
 
             // Подготавливаем модель для отображения результатов
             prepareResultsModel(model, quiz, gameSession, totalQuestions,

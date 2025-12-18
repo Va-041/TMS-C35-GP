@@ -4,7 +4,9 @@ import org.funquizzes.tmsc35gp.dto.CreateQuizDto;
 import org.funquizzes.tmsc35gp.dto.UpdateQuizDto;
 import org.funquizzes.tmsc35gp.entity.*;
 import org.funquizzes.tmsc35gp.repository.CategoryRepository;
+import org.funquizzes.tmsc35gp.repository.QuizRatingRepository;
 import org.funquizzes.tmsc35gp.repository.QuizRepository;
+import org.funquizzes.tmsc35gp.repository.StatisticRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,6 +36,10 @@ public class QuizService {
     private CategoryService categoryService;
     @Autowired
     private QuestionService questionService;
+    @Autowired
+    private QuizRatingRepository quizRatingRepository;
+    @Autowired
+    private StatisticRepository statisticRepository;
 
     // path to upload images
     private final String uploadImagesDir = "src/main/resources/static/images/";
@@ -184,7 +190,7 @@ public class QuizService {
         return quizRepository.findPublicQuizzesWithFilters(categoryIds, difficulties, pageable);
     }
 
-    // Новые методы для проверки существования викторин
+    // методы для проверки существования викторин
     public boolean existsByCategoryIdAndPublicTrue(Long categoryId) {
         return quizRepository.existsByCategoryIdAndPublicTrue(categoryId);
     }
@@ -198,12 +204,24 @@ public class QuizService {
     }
 
     @Transactional
+    public void updateQuizStatistics(Quiz quiz) {
+        // Обновляем рейтинг викторины
+        Double averageRating = quizRatingRepository.findAverageRatingByQuiz(quiz).orElse(0.0);
+        long ratingCount = quizRatingRepository.countByQuiz(quiz);
+
+        quiz.setAverageRating(averageRating);
+        quiz.setRatingCounts((int) ratingCount);
+
+        quizRepository.save(quiz);
+    }
+
+    @Transactional
     public void incrementPlaysCount(Long quizId) {
-        Quiz quiz = findById(quizId);
-        if (quiz != null) {
-            quiz.setPlaysCount(quiz.getPlaysCount() + 1);
-            quizRepository.save(quiz);
-        }
+        Quiz quiz = quizRepository.findById(quizId)
+                .orElseThrow(() -> new RuntimeException("Викторина не найдена"));
+
+        quiz.setPlaysCount(quiz.getPlaysCount() != null ? quiz.getPlaysCount() + 1 : 1);
+        quizRepository.save(quiz);
     }
 
     @Transactional
@@ -223,21 +241,38 @@ public class QuizService {
         }
     }
 
+    // Метод для обновления статистики при завершении игры
     @Transactional
-    public void recordQuizPlay(String username, int score, int correctAnswers, int totalQuestions) {
-        userService.incrementQuizzesPlayed(username);
-        userService.addScore(username, score);
+    public void recordQuizPlay(String username, int totalScore, int correctAnswers, int totalQuestions) {
+        User user = (User) userService.loadUserByUsername(username);
+        UserStatistic statistic = userService.getUserStatistics(username);
 
-        //update correct answers stat
-        for (int i = 0; i < correctAnswers; i++) {
-            userService.addCorrectAnswer(username);
+        // Обновляем статистику пользователя
+        statistic.setTotalScore(statistic.getTotalScore() + totalScore);
+        statistic.setTotalQuizzesPlayed(statistic.getTotalQuizzesPlayed() + 1);
+        statistic.setTotalCorrectAnswers(statistic.getTotalCorrectAnswers() + correctAnswers);
+
+        // Обновляем лучший результат
+        if (totalScore > statistic.getBestScore()) {
+            statistic.setBestScore(totalScore);
         }
 
-        if (correctAnswers == totalQuestions) {
-            userService.addCorrectQuestion(username);
+        // Обновляем серию побед
+        if (correctAnswers >= totalQuestions * 0.8) { // Если ответил правильно на 80%+ вопросов
+            statistic.setWinStreak(statistic.getWinStreak() + 1);
+            if (statistic.getWinStreak() > statistic.getLongestWinStreak()) {
+                statistic.setLongestWinStreak(statistic.getWinStreak());
+            }
+        } else {
+            statistic.setWinStreak(0);
         }
-        // подсчёт среднего балла счёта
-        userService.calculateAverageScore(username);
+
+        // Пересчитываем средний балл
+        if (statistic.getTotalQuizzesPlayed() > 0) {
+            statistic.setAverageScore(statistic.getTotalScore() / statistic.getTotalQuizzesPlayed());
+        }
+
+        statisticRepository.save(statistic);
     }
 
     // временно для загрузки изображений

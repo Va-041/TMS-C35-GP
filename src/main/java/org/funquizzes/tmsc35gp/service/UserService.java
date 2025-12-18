@@ -86,6 +86,12 @@ public class UserService implements UserDetailsService {
         user.setEmail(dto.getEmail());
         user.setBiography(dto.getBiography());
         user.setPublicProfile(dto.isPublicProfile());
+
+        // Обновляем аватарку, если она была загружена
+        if (dto.getAvatarUrl() != null && !dto.getAvatarUrl().isEmpty()) {
+            user.setAvatarUrl(dto.getAvatarUrl());
+        }
+
         userRepository.save(user);
     }
 

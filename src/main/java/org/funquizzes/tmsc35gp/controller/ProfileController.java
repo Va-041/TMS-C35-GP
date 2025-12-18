@@ -18,10 +18,16 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.UUID;
 
 @Controller
 @RequestMapping("/users/profile")
@@ -34,6 +40,8 @@ public class ProfileController {
     @Autowired
     private QuizRatingService quizRatingService;
 
+    // для Windows/Linux совместимости:
+    private static final String UPLOAD_DIR = Paths.get(System.getProperty("user.dir"), "uploads", "avatars").toString();
 
     @GetMapping
     public String profileRedirect() {
@@ -50,30 +58,56 @@ public class ProfileController {
 
         User user = (User) userService.loadUserByUsername(authentication.getName());
 
+        // обновление статистики пользователя перед отображением
+        UserStatistic statistic = userService.getUserStatistics(authentication.getName());
+        user.setStatistic(statistic);
+
+        // ВСЕГДА добавляем статистику в модель для сайдбара
+        model.addAttribute("statistic", statistic);
+
         model.addAttribute("user", user);
         model.addAttribute("activeTab", tab);
         model.addAttribute("activePage", tab);
 
         if (message != null) {
-            model.addAttribute("message", java.net.URLDecoder.decode(message, StandardCharsets.UTF_8));
+            try {
+                model.addAttribute("message", java.net.URLDecoder.decode(message, StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                model.addAttribute("message", message);
+            }
         }
 
         // Загружаем данные в зависимости от активной вкладки
         switch (tab) {
             case "overview":
+                // Рассчитываем проценты
+                if (statistic.getTotalQuizzesPlayed() > 0) {
+                    int totalPossibleAnswers = statistic.getTotalQuizzesPlayed() * 10;
+                    int accuracy = (statistic.getTotalCorrectAnswers() * 100) / Math.max(totalPossibleAnswers, 1);
+                    model.addAttribute("accuracy", Math.min(accuracy, 100));
+                } else {
+                    model.addAttribute("accuracy", 0);
+                }
                 break;
 
             case "statistic":
-                UserStatistic statistic = userService.getUserStatistics(authentication.getName());
-                model.addAttribute("statistic", statistic);
-
                 List<UserStatistic> topPlayers = userService.getTopUsersByScore(10);
                 model.addAttribute("topPlayers", topPlayers);
 
-                // Рассчитываем проценты если есть данные
+                // Рассчитываем максимальный счет для прогресс-баров
+                int maxScore = topPlayers.stream()
+                        .mapToInt(UserStatistic::getTotalScore)
+                        .max()
+                        .orElse(1);
+                model.addAttribute("maxScore", maxScore);
+
+                // Рассчитываем проценты
                 if (statistic.getTotalQuizzesPlayed() > 0) {
-                    int accuracy = (statistic.getTotalCorrectAnswers() * 100) / (statistic.getTotalQuizzesPlayed() * 10);
-                    model.addAttribute("accuracy", accuracy);
+                    int totalPossibleAnswers = statistic.getTotalQuizzesPlayed() * 10;
+                    int accuracy = (statistic.getTotalCorrectAnswers() * 100) / Math.max(totalPossibleAnswers, 1);
+                    model.addAttribute("accuracy", Math.min(accuracy, 100));
+                } else {
+                    model.addAttribute("accuracy", 0);
                 }
                 break;
 
@@ -91,18 +125,6 @@ public class ProfileController {
                 model.addAttribute("passwordDto", new ChangePasswordDto());
                 break;
 
-            case "friends":
-                // Логика для вкладки друзей
-                break;
-
-            case "settings":
-                // Логика для настроек
-                break;
-
-            case "achievements":
-                // Логика для достижений
-                break;
-
             case "activity":
                 // загружаем оценки пользователя
                 Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
@@ -115,10 +137,6 @@ public class ProfileController {
                 model.addAttribute("hasRatings", !ratingsPage.isEmpty());
                 break;
 
-            case "game-history":
-                // Логика для истории игр
-                break;
-
             case "my-quizzes":
                 // Загружаем викторины пользователя
                 List<Quiz> quizzes = quizService.findByCreator(user);
@@ -127,35 +145,101 @@ public class ProfileController {
                 // Подсчет статистики викторин
                 int publicCount = 0;
                 int privateCount = 0;
+                int totalPlays = 0;
+                double totalRating = 0.0;
+                int ratedQuizzes = 0;
+
                 for (Quiz quiz : quizzes) {
                     if (quiz.isPublic()) {
                         publicCount++;
                     } else {
                         privateCount++;
                     }
+
+                    // Суммируем статистику викторин
+                    if (quiz.getPlaysCount() != null) {
+                        totalPlays += quiz.getPlaysCount();
+                    }
+                    if (quiz.getAverageRating() != null && quiz.getAverageRating() > 0) {
+                        totalRating += quiz.getAverageRating();
+                        ratedQuizzes++;
+                    }
                 }
 
                 model.addAttribute("publicCount", publicCount);
                 model.addAttribute("privateCount", privateCount);
+                model.addAttribute("totalPlays", totalPlays);
+                model.addAttribute("averageRating", ratedQuizzes > 0 ? String.format("%.1f", totalRating / ratedQuizzes) : "0.0");
                 break;
         }
 
         return "profile/main";
     }
 
-    // Обработка редактирования профиля
+    // Обработка редактирования профиля с загрузкой аватарки
     @PostMapping("/edit")
-    public String profileEdit(@ModelAttribute("updateProfileDto") UpdateProfileDto dto,
+    public String profileEdit(@ModelAttribute UpdateProfileDto updateDto,
+                              @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
                               Authentication authentication,
                               RedirectAttributes redirectAttributes) {
         try {
-            userService.updateProfile(authentication.getName(), dto);
+            User user = (User) userService.loadUserByUsername(authentication.getName());
+
+            // Сохраняем аватарку, если она загружена
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                String avatarUrl = handleAvatarUpload(avatarFile, user.getUsername());
+                updateDto.setAvatarUrl(avatarUrl);
+            }
+
+            userService.updateProfile(authentication.getName(), updateDto);
+
             String encodedMessage = URLEncoder.encode("Информация профиля успешно обновлена!", StandardCharsets.UTF_8);
             return "redirect:/users/profile/main?tab=overview&message=" + encodedMessage;
         } catch (Exception e) {
-            String encodedMessage = URLEncoder.encode("Ошибка при обновлении профиля!", StandardCharsets.UTF_8);
+            e.printStackTrace();
+            String encodedMessage = URLEncoder.encode("Ошибка при обновлении профиля: " + e.getMessage(), StandardCharsets.UTF_8);
             return "redirect:/users/profile/main?tab=edit&message=" + encodedMessage;
         }
+    }
+
+    // Метод для загрузки аватарки
+    private String handleAvatarUpload(MultipartFile file, String username) throws IOException {
+        if (file == null || file.isEmpty()) {
+            return null;
+        }
+
+        // Проверяем тип файла
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new IllegalArgumentException("Пожалуйста, загрузите изображение");
+        }
+
+        // Проверяем размер файла (максимум 5MB)
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new IllegalArgumentException("Размер файла не должен превышать 5MB");
+        }
+
+        // Создаем директорию, если она не существует
+        Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+        }
+
+        // Генерируем уникальное имя файла
+        String originalFilename = file.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        String filename = username + "_" + UUID.randomUUID().toString() + extension;
+
+        // Сохраняем файл
+        Path filePath = uploadPath.resolve(filename);
+        file.transferTo(filePath.toFile());
+
+        // Возвращаем относительный путь для сохранения в БД
+        // Путь должен начинаться с /uploads/ для доступа через браузер
+        return "/uploads/avatars/" + filename;
     }
 
     // Обработка смены пароля

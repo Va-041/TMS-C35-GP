@@ -8,7 +8,37 @@
             </h5>
         </div>
         <div class="profile-card-body">
-            <form th:action="@{/users/profile/edit}" th:object="${updateProfileDto}" method="post" class="profile-form">
+            <form th:action="@{/users/profile/edit}" th:object="${updateProfileDto}" method="post" class="profile-form" enctype="multipart/form-data">
+                <!-- Аватарка -->
+                <div class="form-group text-center mb-4">
+                    <div class="avatar-upload-wrapper">
+                        <div class="avatar-preview mb-3">
+                            <img th:src="${user.avatarUrl ?: '/images/default-avatar.png'}"
+                                 class="avatar-preview-image"
+                                 alt="Текущая аватарка"
+                                 onerror="this.src='/images/default-avatar.png'">
+                        </div>
+                        <div class="avatar-upload-controls">
+                            <label for="avatarFile" class="btn-profile btn-profile-outline">
+                                <i class="bi bi-camera me-1"></i>Изменить фото
+                            </label>
+                            <input type="file"
+                                   class="d-none"
+                                   id="avatarFile"
+                                   name="avatarFile"
+                                   accept="image/*">
+                            <button type="button"
+                                    class="btn-profile btn-profile-outline btn-profile-sm"
+                                    onclick="resetAvatar()">
+                                <i class="bi bi-x-circle me-1"></i>Сбросить
+                            </button>
+                        </div>
+                        <small class="form-text text-muted d-block mt-2">
+                            Загрузите изображение в формате JPG, PNG или GIF. Максимальный размер: 5MB.
+                        </small>
+                    </div>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Имя</label>
                     <input type="text" class="form-control-profile" th:field="*{name}" required>
@@ -53,5 +83,44 @@
             </form>
         </div>
     </div>
+
+    <script>
+        const avatarFileInput = document.getElementById('avatarFile');
+        const avatarPreview = document.querySelector('.avatar-preview-image');
+        const originalAvatar = avatarPreview.src;
+
+        avatarFileInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Проверяем тип файла
+                if (!file.type.startsWith('image/')) {
+                    alert('Пожалуйста, выберите изображение');
+                    this.value = '';
+                    return;
+                }
+
+                // Проверяем размер файла
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Файл слишком большой. Максимальный размер: 5MB');
+                    this.value = '';
+                    return;
+                }
+
+                // Показываем превью
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    avatarPreview.src = e.target.result;
+                    avatarPreview.classList.add('preview-loaded');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        function resetAvatar() {
+            avatarFileInput.value = '';
+            avatarPreview.src = originalAvatar;
+            avatarPreview.classList.remove('preview-loaded');
+        }
+    </script>
 </div>
 </html>

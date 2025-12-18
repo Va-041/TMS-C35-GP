@@ -67,6 +67,10 @@
                             <td><strong>Средний балл:</strong></td>
                             <td class="text-end" th:text="${statistic.averageScore}">0</td>
                         </tr>
+                        <tr th:if="${accuracy}">
+                            <td><strong>Точность:</strong></td>
+                            <td class="text-end" th:text="${accuracy} + '%'">0%</td>
+                        </tr>
                     </table>
                 </div>
                 <div class="col-md-6">
@@ -77,7 +81,8 @@
                         </div>
                         <div class="progress-bar-profile">
                             <div class="progress-fill progress-primary"
-                                 th:style="'width: ' + ${statistic.totalQuizzesPlayed * 2} + '%;'"></div>
+                                 th:style="${statistic.totalQuizzesPlayed > 0} ? 'width: ' +
+                                 ${T(java.lang.Math).min(statistic.totalQuizzesPlayed * 10, 100)} + '%;' : 'width: 0%;'"></div>
                         </div>
                     </div>
 
@@ -88,7 +93,19 @@
                         </div>
                         <div class="progress-bar-profile">
                             <div class="progress-fill progress-info"
-                                 th:style="'width: ' + ${statistic.totalQuizzesCreated * 5} + '%;'"></div>
+                                 th:style="${statistic.totalQuizzesCreated > 0} ? 'width: ' +
+                                 ${T(java.lang.Math).min(statistic.totalQuizzesCreated * 20, 100)} + '%;' : 'width: 0%;'"></div>
+                        </div>
+                    </div>
+
+                    <div class="progress-container mb-3" th:if="${accuracy}">
+                        <div class="progress-label">
+                            <span>Точность ответов</span>
+                            <span th:text="${accuracy} + '%'">0%</span>
+                        </div>
+                        <div class="progress-bar-profile">
+                            <div class="progress-fill progress-success"
+                                 th:style="'width: ' + ${accuracy} + '%;'"></div>
                         </div>
                     </div>
                 </div>
@@ -96,45 +113,59 @@
         </div>
     </div>
 
-    <!-- Топ игроков -->
-    <div class="profile-card mt-4">
-        <div class="profile-card-header">
-            <h5 class="profile-card-title">
-                <i class="bi bi-trophy me-2"></i>Топ игроков
-            </h5>
-        </div>
-        <div class="profile-card-body">
-            <div class="table-responsive">
-                <table class="profile-table">
-                    <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Игрок</th>
-                        <th class="text-end">Очки</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="player, stat : ${topPlayers}"
-                        th:class="${player.user.id == user.id} ? 'current-user' : ''">
-                        <td th:text="${stat.count}">1</td>
-                        <td>
-                            <div class="leaderboard-row">
-                                <div class="leaderboard-rank" th:if="${stat.count <= 3}"
-                                     th:text="${stat.count}"></div>
-                                <div class="leaderboard-rank" th:unless="${stat.count <= 3}"
-                                     th:text="${stat.count}"></div>
-                                <div class="leaderboard-info">
-                                    <div class="leaderboard-name" th:text="${player.user.name}"></div>
-                                    <div class="leaderboard-username" th:text="'@' + ${player.user.username}"></div>
-                                </div>
-                                <div class="leaderboard-score" th:text="${player.totalScore}"></div>
-                            </div>
-                        </td>
-                        <td class="text-end" th:text="${player.totalScore}">0</td>
-                    </tr>
-                    </tbody>
-                </table>
+    <div class="leaderboard-container fade-in">
+        <div class="leaderboard-header">
+            <div>
+                <h3 class="leaderboard-title">
+                    <i class="bi bi-trophy-fill"></i>ТОП 10 игроков
+                </h3>
+                <p class="leaderboard-subtitle">Рейтинг игроков по количеству очков</p>
             </div>
+            <span class="badge-profile badge-primary">
+            <i class="bi bi-calendar-week"></i>Обновляется ежедневно
+        </span>
+        </div>
+
+        <div th:each="player, stat : ${topPlayers}">
+            <div class="leaderboard-row"
+                 th:classappend="${player.user.username == user.username} ? 'current-user' : ''"
+                 th:style="'--row-index: ' + ${stat.index}">
+                <div class="leaderboard-rank"
+                     th:classappend="'leaderboard-rank-' + ${stat.index + 1}">
+                    <span th:text="${stat.index + 1}">1</span>
+                </div>
+
+                <img th:src="${player.user.avatarUrl ?: '/images/default-avatar.png'}"
+                     alt="Аватар"
+                     class="leaderboard-avatar">
+
+                <div class="leaderboard-info">
+                    <div class="leaderboard-name">
+                        <span th:text="${player.user.name}">Имя игрока</span>
+                        <span th:if="${player.user.username == user.username}"
+                              class="badge-profile badge-primary badge-sm">
+                        Вы
+                    </span>
+                    </div>
+                    <div class="leaderboard-username" th:text="${player.user.username}">
+                        username
+                    </div>
+
+                    <!-- Опционально: индикатор прогресса -->
+                    <div class="leaderboard-progress" th:if="${maxScore > 0}">
+                        <div class="leaderboard-progress-fill"
+                             th:style="'width: ' + ${(player.totalScore / maxScore) * 100} + '%;'">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="leaderboard-score" th:text="${player.totalScore}">
+                    1500
+                </div>
+            </div>
+
+            <!-- Разделитель (кроме последней строки) -->
+            <div th:if="${!stat.last}" class="leaderboard-divider"></div>
         </div>
     </div>
 </div>
